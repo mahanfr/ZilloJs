@@ -1,0 +1,25 @@
+{
+  "configurations": [
+    {
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "name": "nodemon",
+      "program": "${workspaceFolder}/package/index.ts",
+      "request": "launch",
+      "restart": true,
+      "runtimeExecutable": "npx nodemon",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch",
+      "program": "${workspaceFolder}/package/index.ts",
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": ["${workspaceFolder}/lib/**/*.js"]
+    }
+  ]
+}
