@@ -7,10 +7,11 @@
     "strict": true,                                      /* Enable all strict type-checking options. */
     "skipLibCheck": true,                                /* Skip type checking all .d.ts files. */
     
+    "declaration": true,
     "outDir": "./lib",                                   /* Specify an output folder for all emitted files. */
-    "rootDir": "./package",                              /* Specify the root folder within your source files. */
+    "rootDir": "./src",                              /* Specify the root folder within your source files. */
   },
   "include": [
-    "package/**/*"
+    "./src/**/*"
   ]
 }

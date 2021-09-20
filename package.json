@@ -2,11 +2,14 @@
   "name": "zillojs",
   "version": "0.0.1",
   "description": "Structure based web framework",
-  "main": "package/index.ts",
+  "main": "lib/index.js",
+  "files": [
+    "lib/**/*"
+  ],
   "scripts": {
     "test": "test",
     "tsc": "tsc",
-    "nodemon":"nodemon"
+    "nodemon":"nodemon --watch package"
   },
   "keywords": [
     "web",
