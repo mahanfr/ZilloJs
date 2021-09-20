@@ -2,9 +2,10 @@
   "name": "zillojs",
   "version": "0.0.1",
   "description": "Structure based web framework",
-  "main": "index.js",
+  "main": "package/index.js",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "tsc":"tsc"
   },
   "keywords": [
     "web",
