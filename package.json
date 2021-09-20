@@ -1,0 +1,27 @@
+{
+  "name": "zillojs",
+  "version": "0.0.1",
+  "description": "Structure based web framework",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "keywords": [
+    "web",
+    "framework",
+    "web",
+    "framework",
+    "json",
+    "rest",
+    "rest",
+    "api",
+    "api",
+    "backend",
+    "server"
+  ],
+  "author": "Mahan Farzaneh",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.4.3"
+  }
+}
