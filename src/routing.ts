@@ -25,31 +25,21 @@ function parseToRegex(url:string):string {
   return str;
 }
 
-function getPramRoutesMatch(url:string,route:string): {[key:string]:string; } | undefined {
+function getPramRouteValues(url:string,route:string): {[key:string]:string; } | undefined {
   const regex = parseToRegex(route);
   const match = url.match(new RegExp(regex));
   return match?.groups
 }
 
-function isRouteMatch(url:string, route:string): boolean {
+function isRouteMatchsUrl(url:string, route:string): boolean{
   url = url.split('?')[0]
-  if (url.endsWith('/'))
-    url = url.slice(0,url.length - 1)
-  if (route.endsWith('/'))
-    route = route.slice(0,route.length - 1)
-  return (url === route)
-}
-
-function isPramRoutesMatch(url:string, route:string): boolean{
   const regex = new RegExp(parseToRegex(route));
   return regex.test(url)
 }
 
 // TEST 
-if(isRouteMatch('/products/5/?id=2112','/products/$id/'))
+if(isRouteMatchsUrl('/products/hello/','/products/he1llo/')){
   console.log("match")
-if(isPramRoutesMatch('/products/4/2112/','/products/$id/')){
-  console.log("match")
-  console.log(getPramRoutesMatch('/products/4/2112/','/products/$id/'))
+  //console.log(getPramRoutesMatch('/products/hello/','/products/hello/'))
 }
-export {parseToRegex , isRouteMatch};
+export {parseToRegex, isRouteMatchsUrl, getPramRouteValues};
