@@ -1,5 +1,7 @@
 
-function parseToRegex(url:string) {
+const routeList : string[] = []
+
+function parseToRegex(url:string):string {
   let str:string = "";
 
   for (var i =0; i < url.length; i++) {
@@ -30,10 +32,24 @@ function getPramRoutesMatch(url:string,route:string): {[key:string]:string; } | 
 }
 
 function isRouteMatch(url:string, route:string): boolean {
+  url = url.split('?')[0]
+  if (url.endsWith('/'))
+    url = url.slice(0,url.length - 1)
+  if (route.endsWith('/'))
+    route = route.slice(0,route.length - 1)
   return (url === route)
 }
 
-if(isRouteMatch('/products/id/','/products/id/'))
-  console.log("match")
+function isPramRoutesMatch(url:string, route:string): boolean{
+  const regex = new RegExp(parseToRegex(route));
+  return regex.test(url)
+}
 
+// TEST 
+if(isRouteMatch('/products/5/?id=2112','/products/$id/'))
+  console.log("match")
+if(isPramRoutesMatch('/products/4/2112/','/products/$id/')){
+  console.log("match")
+  console.log(getPramRoutesMatch('/products/4/2112/','/products/$id/'))
+}
 export {parseToRegex , isRouteMatch};
