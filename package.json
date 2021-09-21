@@ -9,7 +9,8 @@
   "scripts": {
     "test": "test",
     "tsc": "tsc",
-    "nodemon":"nodemon --watch package"
+    "nodemon":"nodemon --watch package",
+    "ts-node":"ts-node"
   },
   "keywords": [
     "web",
