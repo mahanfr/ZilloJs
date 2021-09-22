@@ -37,9 +37,4 @@ function isRouteMatchsUrl(url:string, route:string): boolean{
   return regex.test(url)
 }
 
-// TEST 
-if(isRouteMatchsUrl('/products/hello/','/products/he1llo/')){
-  console.log("match")
-  //console.log(getPramRoutesMatch('/products/hello/','/products/hello/'))
-}
 export {parseToRegex, isRouteMatchsUrl, getPramRouteValues};
