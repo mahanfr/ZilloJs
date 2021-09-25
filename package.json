@@ -2,9 +2,14 @@
   "name": "zillojs",
   "version": "0.0.1",
   "description": "Structure based web framework",
-  "main": "lib/index.js",
+  "main": "bin/index.js",
+  "bin": {  
+    "zillo": "./bin/index.js"  
+  },
+  "type": "module",
   "files": [
-    "lib/**/*"
+    "lib/**/*",
+    "bin/**/*"
   ],
   "scripts": {
     "test": "jest",
