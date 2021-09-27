@@ -4,10 +4,10 @@
  *  
 */
 import { Routes, Method } from '../lib/routing.js';
-export let routes = Routes.getInstance()
+export const routes = Routes.getInstance()
 
 
 // index Route
-routes.addRoute('/', Method.GET)
-routes.addRoute('/hello', Method.GET)
+routes.addRoute('/', Method.GET,()=>{console.log("ran....")})
+routes.addRoute('/hello', Method.GET,()=>{console.log("ran....")})
 

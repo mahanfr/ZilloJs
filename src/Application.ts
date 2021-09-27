@@ -36,6 +36,7 @@ class Application {
       request.body = await this.readRequestBody(request);
 
       if (request.url in this.routes.routes) {
+        this.routes.routes[request.url].view()
         response.writeHead(200, { 'Content-Type': 'text/html' });
         response.write('<h1>hello World</h1>');
         response.end();
