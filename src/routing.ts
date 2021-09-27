@@ -23,20 +23,19 @@ const Routes = (function (){
   function Routes() {
     //do stuff
   }
-  var instance: any;
+  var instance: _Routes;
   return {
     getInstance: function () {
       if (instance == null) {
         instance = new _Routes();
         // Hide the constructor so the returned object can't be new'd...
-        instance.constructor = null;
       }
       return instance;
     },
   };
 })();
 
-class _Routes {
+export class _Routes {
   routes: { [key: string]: Route };
 
   constructor() {

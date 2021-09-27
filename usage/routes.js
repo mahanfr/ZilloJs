@@ -4,10 +4,11 @@
  *  
 */
 import { Routes, Method } from '../lib/routing.js';
+import indexView from './views.js'
 export const routes = Routes.getInstance()
 
 
 // index Route
-routes.addRoute('/', Method.GET,()=>{console.log("ran....")})
+routes.addRoute('/', Method.GET, indexView)
 routes.addRoute('/hello', Method.GET,()=>{console.log("ran....")})
 

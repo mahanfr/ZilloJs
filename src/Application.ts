@@ -36,10 +36,10 @@ class Application {
       request.body = await this.readRequestBody(request);
 
       if (request.url in this.routes.routes) {
-        this.routes.routes[request.url].view()
-        response.writeHead(200, { 'Content-Type': 'text/html' });
-        response.write('<h1>hello World</h1>');
-        response.end();
+        this.routes.routes[request.url].view(response,request)
+        // ************* Call above insted
+        
+        // *************
       } else {
         response.writeHead(404, { 'Content-Type': 'text/plane' });
         response.write('404 not found');
