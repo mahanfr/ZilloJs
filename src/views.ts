@@ -17,6 +17,7 @@ interface IResponseHelper{
  * {# end-if #}
 */
 
+// 
 // Render function to higher the framework level
 // TODO: Add template Engine squirrellyJs
 function render(request:any, template:string, context?:JSON) : IResponseHelper{
