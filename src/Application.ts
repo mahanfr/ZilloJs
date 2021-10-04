@@ -36,10 +36,10 @@ class Application {
       request.body = await this.readRequestBody(request);
 
       if (request.url in this.routes.routes) {
-        this.routes.routes[request.url].view(response,request)
-        // ************* Call above insted
-        
-        // *************
+        const responseHelper = this.routes.routes[request.url].view(request)
+        response.writeHead(responseHelper.statusCode, { 'Content-Type': responseHelper.contentType });
+        response.write(responseHelper.body);
+        response.end();
       } else {
         response.writeHead(404, { 'Content-Type': 'text/plane' });
         response.write('404 not found');

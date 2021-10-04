@@ -1,8 +1,9 @@
+import { render } from '../lib/views.js'
 
-function indexView(response,request){
-    response.writeHead(200, { 'Content-Type': 'text/html' });
-    response.write('<h1>hello World</h1>');
-    response.end();
+
+function indexView(request){
+    return render(request, 'usage/template/index.html')
+    // return response(request, json, code)
 }
 
 export default indexView
