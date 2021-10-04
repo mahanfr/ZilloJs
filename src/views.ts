@@ -7,15 +7,19 @@ interface IResponseHelper{
     head?: any
 }
 
+/**
+ * {# for boy in boys #}
+ *  <h1>{{ boy.name }}</h1>
+ * {# end-for #}
+ * 
+ * {# if(a === true) #}
+ *  <h1>Text</h1>
+ * {# end-if #}
+*/
 
-// Write a render function to higher the framework level
+// Render function to higher the framework level
+// TODO: Add template Engine squirrellyJs
 function render(request:any, template:string, context?:JSON) : IResponseHelper{
-    /**
-     ** Needs to return the response **
-     * response.writeHead(200, { 'Content-Type': 'text/html' });
-     * response.write('<h1>hello World</h1>');
-     * response.end();
-    */
 
     let responseHelper: IResponseHelper = {
         statusCode : 200,
