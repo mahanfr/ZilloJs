@@ -35,7 +35,7 @@ class Application {
     this.server = http.createServer(async (request: any, response: any) => {
       request.body = await this.readRequestBody(request);
 
-      // TODO: chack for url with prams
+      // TODO: check for url with prams
       if (request.url in this.routes.routes) {
         const responseHelper = this.routes.routes[request.url].view(request)
         response.writeHead(responseHelper.statusCode, { 'Content-Type': responseHelper.contentType });

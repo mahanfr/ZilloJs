@@ -1,4 +1,4 @@
-// Template Sintax
+// Template Syntax
 // VARIABLE Syntax => {{ user.name }} or {{ user.birthday | year }}
 // Variables Regex => /{{[\s]*(?<variable>[\w_\.]+)[\s]*(\|)?[\s]*(?<filter>[\w_\.]*)[\s]*}}/
 
@@ -66,11 +66,11 @@ export interface IToken {
 // and tokenizing every section using stacks
 export function tokenizeHtml(html:string):IToken[] {
   let tokenStack: IToken[] = [];
-  let exprestionStack: string[] = [];
+  let expressionStack: string[] = [];
   let line: number = 0;
   let col: number = 0;
   let isBufferActive: Boolean = false;
-  let exprestionBuffer: string = '';
+  let expressionBuffer: string = '';
   let isHtmlBufferActive: Boolean = true;
   let htmlBuffer: string = '';
 
@@ -78,88 +78,88 @@ export function tokenizeHtml(html:string):IToken[] {
     col++;
     let htmlChar = html[i];
     if (htmlChar === '{') {
-      const val = exprestionStack.pop();
+      const val = expressionStack.pop();
       if (!val) {
-        exprestionStack.push('{');
+        expressionStack.push('{');
         isBufferActive = false;
       } else {
         if (val === '{') {
-          exprestionStack.push('{{');
+          expressionStack.push('{{');
           isBufferActive = true;
         }
       }
       continue;
     }
     if (htmlChar === '%') {
-      const val = exprestionStack.pop();
+      const val = expressionStack.pop();
       if (!val) {
         isBufferActive = false;
         continue;
       }
       if (val === '{') {
-        exprestionStack.push('{%');
+        expressionStack.push('{%');
         isBufferActive = true;
       } else if (val === '{%') {
-        exprestionStack.push('{%%');
+        expressionStack.push('{%%');
         isBufferActive = false;
       }
       continue;
     }
     if (htmlChar === '!') {
-      const val = exprestionStack.pop();
+      const val = expressionStack.pop();
       if (!val) {
         isBufferActive = false;
         continue;
       }
       if (val === '{') {
-        exprestionStack.push('{!');
+        expressionStack.push('{!');
         isBufferActive = true;
       } else if (val == '{!') {
-        exprestionStack.push('{!!');
+        expressionStack.push('{!!');
         isBufferActive = false;
       }
       continue;
     }
     if (htmlChar === '}') {
-      const val = exprestionStack.pop();
+      const val = expressionStack.pop();
       if (!val) {
         isBufferActive = false;
         continue;
       }
       if (val === '{{') {
-        exprestionStack.push('{{}');
+        expressionStack.push('{{}');
         isBufferActive = false;
       } else if (val == '{%%') {
-        let exprestion = '{%' + exprestionBuffer + '%}';
+        let expression = '{%' + expressionBuffer + '%}';
         isBufferActive = false;
         tokenStack.push(
           tokenizeText(
-            htmlBuffer.slice(0, htmlBuffer.length - exprestion.length + 4),
+            htmlBuffer.slice(0, htmlBuffer.length - expression.length + 4),
           ),
         );
-        tokenStack.push(tokenizeLogicalExpretions(exprestion, i, line, col));
-        exprestionBuffer = '';
+        tokenStack.push(tokenizeLogicalExpressions(expression, i, line, col));
+        expressionBuffer = '';
         htmlBuffer = '';
       } else if (val == '{{}') {
-        let exprestion = '{{' + exprestionBuffer + '}}';
+        let expression = '{{' + expressionBuffer + '}}';
         isBufferActive = false;
         tokenStack.push(
           tokenizeText(
-            htmlBuffer.slice(0, htmlBuffer.length - exprestion.length + 4),
+            htmlBuffer.slice(0, htmlBuffer.length - expression.length + 4),
           ),
         );
-        tokenStack.push(tokenizeVariableExpretions(exprestion, i, line, col));
-        exprestionBuffer = '';
+        tokenStack.push(tokenizeVariableExpressions(expression, i, line, col));
+        expressionBuffer = '';
         htmlBuffer = '';
       } else if (val == '{!!') {
-        let exprestion = '{!' + exprestionBuffer + '!}';
+        let expression = '{!' + expressionBuffer + '!}';
         isBufferActive = false;
         tokenStack.push(
           tokenizeText(
-            htmlBuffer.slice(0, htmlBuffer.length - exprestion.length + 4),
+            htmlBuffer.slice(0, htmlBuffer.length - expression.length + 4),
           ),
         );
-        exprestionBuffer = '';
+        expressionBuffer = '';
         htmlBuffer = '';
       }
       continue;
@@ -173,67 +173,67 @@ export function tokenizeHtml(html:string):IToken[] {
       continue;
     }
     if (isBufferActive) {
-      exprestionBuffer = exprestionBuffer + htmlChar;
+      expressionBuffer = expressionBuffer + htmlChar;
     }
   }
   tokenStack.push(tokenizeText(htmlBuffer));
   return tokenStack
 }
 
-function tokenizeLogicalExpretions(
-  exprestion: string,
+function tokenizeLogicalExpressions(
+  expression: string,
   pos: number,
   line: number,
   col: number,
 ): IToken {
-  if (ifRegex.test(exprestion)) {
-    const match = exprestion.match(ifRegex)
-    return { type: TokenType.IF, value:match?.groups, data: exprestion, isEndNeeded: true };
+  if (ifRegex.test(expression)) {
+    const match = expression.match(ifRegex)
+    return { type: TokenType.IF, value:match?.groups, data: expression, isEndNeeded: true };
   }
-  if (forRegex.test(exprestion)) {
-    const match = exprestion.match(forRegex)
-    return { type: TokenType.FOR, value:match?.groups, data: exprestion, isEndNeeded: true };
+  if (forRegex.test(expression)) {
+    const match = expression.match(forRegex)
+    return { type: TokenType.FOR, value:match?.groups, data: expression, isEndNeeded: true };
   }
-  if (loopRegex.test(exprestion)) {
-    const match = exprestion.match(loopRegex)
-    return { type: TokenType.LOOP, value:match?.groups, data: exprestion, isEndNeeded: true };
+  if (loopRegex.test(expression)) {
+    const match = expression.match(loopRegex)
+    return { type: TokenType.LOOP, value:match?.groups, data: expression, isEndNeeded: true };
   }
-  if (blockRegex.test(exprestion)) {
-    const match = exprestion.match(blockRegex)
-    return { type: TokenType.BLOCK, value:match?.groups, data: exprestion, isEndNeeded: true };
+  if (blockRegex.test(expression)) {
+    const match = expression.match(blockRegex)
+    return { type: TokenType.BLOCK, value:match?.groups, data: expression, isEndNeeded: true };
   }
-  if (extendsRegex.test(exprestion)) {
-    const match = exprestion.match(extendsRegex)
-    return { type: TokenType.EXTEND, value:match?.groups, data: exprestion, isEndNeeded: false };
+  if (extendsRegex.test(expression)) {
+    const match = expression.match(extendsRegex)
+    return { type: TokenType.EXTEND, value:match?.groups, data: expression, isEndNeeded: false };
   }
-  if (endRegex.test(exprestion)) {
-    var token = { type: TokenType.ENDIF, data: exprestion, isEndNeeded: false };
-    if (exprestion.includes('endif')) token.type = TokenType.ENDIF;
-    else if (exprestion.includes('endfor')) token.type = TokenType.ENDFOR;
-    else if (exprestion.includes('endloop')) token.type = TokenType.ENDLOOP;
-    else if (exprestion.includes('endblock')) token.type = TokenType.ENDBLOCK;
+  if (endRegex.test(expression)) {
+    var token = { type: TokenType.ENDIF, data: expression, isEndNeeded: false };
+    if (expression.includes('endif')) token.type = TokenType.ENDIF;
+    else if (expression.includes('endfor')) token.type = TokenType.ENDFOR;
+    else if (expression.includes('endloop')) token.type = TokenType.ENDLOOP;
+    else if (expression.includes('endblock')) token.type = TokenType.ENDBLOCK;
     else {
-      throw new Error(`:${line}:${col} => ${exprestion} : Unexpected end tag`);
+      throw new Error(`:${line}:${col} => ${expression} : Unexpected end tag`);
     }
     return token;
   }
 
-  throw new Error(`:${line}:${col} => ${exprestion} : Unexpected template token`);
+  throw new Error(`:${line}:${col} => ${expression} : Unexpected template token`);
 }
 
-function tokenizeText(exprestion: string): IToken {
-  return { type: TokenType.TEXT, data: exprestion, isEndNeeded: false };
+function tokenizeText(expression: string): IToken {
+  return { type: TokenType.TEXT, data: expression, isEndNeeded: false };
 }
 
-function tokenizeVariableExpretions(
-  exprestion: string,
+function tokenizeVariableExpressions(
+  expression: string,
   pos: number,
   line: number,
   col: number,
 ): IToken {
-  if (variableRegex.test(exprestion)) {
-    const match = exprestion.match(variableRegex)
-    return { type: TokenType.VARIABLE, value:match?.groups, data: exprestion, isEndNeeded: false };
+  if (variableRegex.test(expression)) {
+    const match = expression.match(variableRegex)
+    return { type: TokenType.VARIABLE, value:match?.groups, data: expression, isEndNeeded: false };
   }
   throw new Error(`:${line}:${col} Unexpected variable format`);
 }

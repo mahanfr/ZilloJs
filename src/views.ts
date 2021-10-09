@@ -8,20 +8,8 @@ interface IResponseHelper{
     head?: any
 }
 
-/**
- * {# for boy in boys #}
- *  <h1>{{ boy.name }}</h1>
- * {# end-for #}
- * 
- * {# if(a === true) #}
- *  <h1>Text</h1>
- * {# end-if #}
-*/
-
-// 
 // Render function to higher the framework level
-// TODO: Add template Engine squirrellyJs
-function render(request:any, template:string, context?:JSON) : IResponseHelper{
+function render(request:any, template:string, context?:any) : IResponseHelper{
 
     let responseHelper: IResponseHelper = {
         statusCode : 200,
@@ -29,9 +17,14 @@ function render(request:any, template:string, context?:JSON) : IResponseHelper{
         body: 'hello world',
     }
     
+    // TODO: Fix problems with same error for template and file
     try{
+        
         const data = fs.readFileSync(template)
-        const parseData = parseHtml(data.toString())
+        if(context){
+            context['request'] = request.method
+        }
+        const parseData = parseHtml(data.toString(),context)
         responseHelper.statusCode = 200
         responseHelper.body = parseData
     }catch(e){
