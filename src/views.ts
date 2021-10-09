@@ -1,3 +1,4 @@
+import { parseHtml } from './templates/parser.js'
 import fs from 'fs'
 
 interface IResponseHelper{
@@ -30,8 +31,9 @@ function render(request:any, template:string, context?:JSON) : IResponseHelper{
     
     try{
         const data = fs.readFileSync(template)
+        const parseData = parseHtml(data.toString())
         responseHelper.statusCode = 200
-        responseHelper.body = data.toString()
+        responseHelper.body = parseData
     }catch(e){
         console.log(e);
         responseHelper.statusCode = 404
