@@ -2,7 +2,7 @@ import fs from 'fs'
 
 var args = process.argv.slice(2)
 
-// levenshtein Distance to find misspels while entering commands 
+// levenshtein Distance to find misspells while entering commands 
 const levenshteinDistance = (str1 = '', str2 = '') => {
   const track = Array(str2.length + 1).fill(null).map(() =>
   Array(str1.length + 1).fill(null));
@@ -25,15 +25,15 @@ const levenshteinDistance = (str1 = '', str2 = '') => {
   return track[str2.length][str1.length];
 };
 
-// Visable code for help command
+// Visible code for help command
 const helpMessage =
 `\x1b[33m 
 usage: Zillojs command [options] required_input required_input2 \x1b[0m
 \x1b[34m commands: \x1b[0m 
       help, h                       Show help for all commands and options
-      init [Project name]           Create project and add nessesery files
+      init [Project name]           Create project and add necessary files
 \x1b[34m options: \x1b[0m 
-      -v, --version                 Show the current version of the framwork
+      -v, --version                 Show the current version of the framework
       -h, --help                    Show help for a command
 `
 
@@ -112,7 +112,7 @@ for(var i = 0; i < keys.length; i++){
     subcommands[subcommand](args.slice(1))
     process.exit(0)
   }else if(distance < 3){
-    console.error('Command has no refrence to execute. Do you mean ' + keys[i] + ' ?')
+    console.error('Command has no reference to execute. Do you mean ' + keys[i] + ' ?')
     process.exit(127)
   }
 }
