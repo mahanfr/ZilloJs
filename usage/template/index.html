@@ -30,7 +30,15 @@
       {% endif %}
     {% endif %}
     {% loop 6 %}
-    <h3>looping boys!</h3>
+      {% if true %}
+        {% if true %}
+        <a href="#">link1</a>
+        {% endif %}
+        {% if true %}
+        <a href="#">link2</a>
+        {% endif %}
+        <h3>looping boys!{{user.age}}</h3>
+      {% endif %}
     {% endloop %}
     <footer>
       this is footer

@@ -35,6 +35,7 @@ function tokenToString(tokens:IToken[],context:any):string{
   }else if(token.type === TokenType.IF) {
     let positionalTokens = findTokensInclosed(tokens,TokenType.IF,TokenType.ENDIF)
     if(checkIfCondition(token,context)){
+      // TODO: Reverse should be inside the function
       return tokenToString((positionalTokens.in).reverse(),context) 
         + tokenToString(positionalTokens.out,context)
     }
@@ -43,7 +44,8 @@ function tokenToString(tokens:IToken[],context:any):string{
     let loopCycles:number = parseInt(token.value['times'])
     let loopResult:string = ''
     var positionalTokens = findTokensInclosed(tokens,TokenType.LOOP,TokenType.ENDLOOP)
-    const insideString = tokenToString(positionalTokens.in,context)
+    // TODO: Reverse should be inside the function
+    const insideString = tokenToString((positionalTokens.in).reverse(),context)
     while(loopCycles > 0){
       loopResult += insideString
       loopCycles--;
@@ -78,6 +80,7 @@ function parseVariables(token: IToken,context:any): string {
   else return '';
 }
 
+// TODO: implement this function
 function checkIfCondition(token: IToken, context: any):Boolean {
   return true
 }
@@ -90,8 +93,12 @@ interface IPositionalTokens{
 function findTokensInclosed(tokens: IToken[],startingType:TokenType,endType: TokenType): IPositionalTokens {
   let statementsFlag : Boolean = false
   const tokensStack : IToken[] = [] 
-
-  // [if] <- [end] => [] until [] <- [end] => return
+  /**
+   * [if] <- [end] => [] until [] <- [end] => return
+   * if an opening Token pops then the flags become true and 
+   * when seen a ending Token it becomes false
+   * if ending token comes up and the flag is false then function returns
+   */
   while(tokens.length > 0){
     const token = tokens.pop()
     if (token?.type === startingType) {
@@ -102,7 +109,8 @@ function findTokensInclosed(tokens: IToken[],startingType:TokenType,endType: Tok
     if(token?.type === endType){
       if(statementsFlag === false){
         return {in:tokensStack,out:tokens}
-      }else{// If statementsFlag is true
+      }else{
+        // If statementsFlag is true
         statementsFlag = false
         tokensStack.push(token)
       }
