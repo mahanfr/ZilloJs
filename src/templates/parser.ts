@@ -39,6 +39,16 @@ function tokenToString(tokens:IToken[],context:any):string{
         + tokenToString(positionalTokens.out,context)
     }
     return tokenToString(positionalTokens.out,context)
+  }else if(token.type === TokenType.LOOP){
+    let loopCycles:number = parseInt(token.value['times'])
+    let loopResult:string = ''
+    var positionalTokens = findTokensInclosed(tokens,TokenType.LOOP,TokenType.ENDLOOP)
+    const insideString = tokenToString(positionalTokens.in,context)
+    while(loopCycles > 0){
+      loopResult += insideString
+      loopCycles--;
+    }
+    return loopResult + tokenToString(positionalTokens.out,context)
   }
   else {
     return tokenToString(tokens,context)

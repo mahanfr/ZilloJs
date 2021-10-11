@@ -20,8 +20,21 @@
       </div>
     </nav>
     {% for a in b %}
-    <h1>Hello World</h1>
+      <h1>Hello World</h1>
     {% endfor %}
+    {% if false %}
+      <h1>you should not see {{ user.age }}</h1>
+      <h1>you should not see this</h1>
+      {% if true %}
+        <p>bro, You are fbi</p>
+      {% endif %}
+    {% endif %}
+    {% loop 6 %}
+    <h3>looping boys!</h3>
+    {% endloop %}
+    <footer>
+      this is footer
+    </footer>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
       integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
