@@ -22,24 +22,27 @@
     {% for a in b %}
       <h1>Hello World</h1>
     {% endfor %}
-    {% if false %}
+    
+    {% if user %}
       <h1>you should not see {{ user.age }}</h1>
       <h1>you should not see this</h1>
       {% if true %}
         <p>bro, You are fbi</p>
       {% endif %}
     {% endif %}
+    
     {% loop 6 %}
       {% if true %}
         {% if true %}
         <a href="#">link1</a>
         {% endif %}
-        {% if true %}
+        {% if false %}
         <a href="#">link2</a>
         {% endif %}
         <h3>looping boys!{{user.age}}</h3>
       {% endif %}
     {% endloop %}
+
     <footer>
       this is footer
     </footer>

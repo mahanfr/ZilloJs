@@ -5,17 +5,6 @@ export function parseHtml(html: string, context: any): string {
   const tokens: IToken[] = tokenizeHtml(html);
   tokens.reverse();
   newHtml = tokenToString(tokens,context)
-  // while (tokens.length > 0) {
-  //   const token: IToken | undefined = tokens.pop();
-  //   // This condition checks for tokens to not be null or undefined
-  //   if (!token) throw new Error('problem resolving tokens');
-  //   // Going throw all types and perform appropriate action
-  //   if (token.type === TokenType.TEXT) {
-  //     newHtml += token.data;
-  //   } else if (token.type === TokenType.VARIABLE) {
-  //     newHtml += parseVariables(token,context);
-  //   }
-  // }
   return newHtml;
 }
 
@@ -35,8 +24,7 @@ function tokenToString(tokens:IToken[],context:any):string{
   }else if(token.type === TokenType.IF) {
     let positionalTokens = findTokensInclosed(tokens,TokenType.IF,TokenType.ENDIF)
     if(checkIfCondition(token,context)){
-      // TODO: Reverse should be inside the function
-      return tokenToString((positionalTokens.in).reverse(),context) 
+      return tokenToString(positionalTokens.in,context) 
         + tokenToString(positionalTokens.out,context)
     }
     return tokenToString(positionalTokens.out,context)
@@ -44,8 +32,7 @@ function tokenToString(tokens:IToken[],context:any):string{
     let loopCycles:number = parseInt(token.value['times'])
     let loopResult:string = ''
     var positionalTokens = findTokensInclosed(tokens,TokenType.LOOP,TokenType.ENDLOOP)
-    // TODO: Reverse should be inside the function
-    const insideString = tokenToString((positionalTokens.in).reverse(),context)
+    const insideString = tokenToString(positionalTokens.in,context)
     while(loopCycles > 0){
       loopResult += insideString
       loopCycles--;
@@ -62,14 +49,8 @@ function parseVariables(token: IToken,context:any): string {
   // TODO: handel filters
   let filter;
   try {
-    const value = token.value['variable'];
-    // TODO: handel indexing a[b] along side of referencing a.b
-    const values = value.split('.');
-    let execString = 'context';
-    // user['address']['city']
-    for (let i in values) {
-      execString += "[\'" + values[i] + "\']";
-    }
+    const value:string = token.value['variable'];    
+    const execString = transformReferencingToIndexing(value)
     variable = new Function('context',"return " + execString)(context);
   } catch (e) {
     throw new Error(
@@ -82,7 +63,34 @@ function parseVariables(token: IToken,context:any): string {
 
 // TODO: implement this function
 function checkIfCondition(token: IToken, context: any):Boolean {
-  return true
+  const condition = token.value['condition']
+  if(condition){
+    if(condition === 'true' || condition === 'false'){
+      let result = new Function("return ("+condition+")? true : false;")();
+      if(result !== undefined)
+        return result
+      else
+        throw new Error('Error parsing '+ token + ':'+ condition +' is not supported')
+    }
+    else {
+      const phrase = transformReferencingToIndexing(condition)
+      let result = new Function('context',"return ("+phrase+")? true : false;")(context);
+      if(result !== undefined)
+        return result
+      else
+        throw new Error('Error parsing '+ token + ':'+ condition +' is not available in context')
+    }
+  }
+  const comp1 = token.value['comp1']
+  const comp2 = token.value['comp2']
+  const op = token.value['op']
+  // TODO: Add check for operational conditions
+  if(comp1 && comp2 && op){
+    
+    return false
+  }
+  
+  return false
 }
 
 interface IPositionalTokens{
@@ -108,7 +116,7 @@ function findTokensInclosed(tokens: IToken[],startingType:TokenType,endType: Tok
     }
     if(token?.type === endType){
       if(statementsFlag === false){
-        return {in:tokensStack,out:tokens}
+        return {in:tokensStack.reverse(),out:tokens}
       }else{
         // If statementsFlag is true
         statementsFlag = false
@@ -121,4 +129,15 @@ function findTokensInclosed(tokens: IToken[],startingType:TokenType,endType: Tok
   }
 
   return {in:[],out:tokens}
+}
+
+// TODO: handel indexing a[b] along side of referencing a.b
+function transformReferencingToIndexing(variableString:string,objectString='context'):string{
+  const values = variableString.split('.');
+  let execString = objectString;
+  // user['address']['city']
+  for (let i in values) {
+    execString += "[\'" + values[i] + "\']";
+  }
+  return execString
 }
