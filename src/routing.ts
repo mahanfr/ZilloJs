@@ -6,12 +6,17 @@ enum Method {
 }
 
 class Route {
-  method : Method;
-  helper : string;
-  url : string;
-  view : Function;
+  method: Method;
+  helper: string;
+  url: string;
+  view: Function;
 
-  constructor(url: string, method: Method, view:Function, helper: string = 'text/html') {
+  constructor(
+    url: string,
+    method: Method,
+    view: Function,
+    helper: string = 'text/html',
+  ) {
     this.url = url;
     this.method = method;
     this.helper = helper;
@@ -19,7 +24,7 @@ class Route {
   }
 }
 
-const Routes = (function (){
+const Routes = (function () {
   function Routes() {
     //do stuff
   }
@@ -42,7 +47,12 @@ export class _Routes {
     this.routes = {};
   }
 
-  public addRoute(url: string, method: Method, view:Function, helper?: string) {
+  public addRoute(
+    url: string,
+    method: Method,
+    view: Function,
+    helper?: string,
+  ) {
     let route = new Route(url, method, view, helper);
     this.routes[url] = route;
   }
@@ -101,7 +111,7 @@ export class _Routes {
     return match?.groups;
   }
 
-  public isRouteMatchsUrl(url: string, route: string): boolean {
+  public isRouteMatchesUrl(url: string, route: string): boolean {
     url = url.split('?')[0];
     const regex = new RegExp(this.parseToRegex(route));
     return regex.test(url);

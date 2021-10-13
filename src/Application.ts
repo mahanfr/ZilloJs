@@ -37,8 +37,10 @@ class Application {
 
       // TODO: check for url with prams
       if (request.url in this.routes.routes) {
-        const responseHelper = this.routes.routes[request.url].view(request)
-        response.writeHead(responseHelper.statusCode, { 'Content-Type': responseHelper.contentType });
+        const responseHelper = this.routes.routes[request.url].view(request);
+        response.writeHead(responseHelper.statusCode, {
+          'Content-Type': responseHelper.contentType,
+        });
         response.write(responseHelper.body);
         response.end();
       } else {

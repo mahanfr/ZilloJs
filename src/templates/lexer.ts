@@ -64,7 +64,7 @@ export interface IToken {
 
 // Going throw each char one by one
 // and tokenizing every section using stacks
-export function tokenizeHtml(html:string):IToken[] {
+export function tokenizeHtml(html: string): IToken[] {
   let tokenStack: IToken[] = [];
   let expressionStack: string[] = [];
   let line: number = 0;
@@ -164,9 +164,9 @@ export function tokenizeHtml(html:string):IToken[] {
       }
       continue;
     }
-  
+
     htmlBuffer += htmlChar;
-  
+
     if (htmlChar === '\n') {
       line++;
       col = 0;
@@ -177,7 +177,7 @@ export function tokenizeHtml(html:string):IToken[] {
     }
   }
   tokenStack.push(tokenizeText(htmlBuffer));
-  return tokenStack
+  return tokenStack;
 }
 
 function tokenizeLogicalExpressions(
@@ -187,24 +187,49 @@ function tokenizeLogicalExpressions(
   col: number,
 ): IToken {
   if (ifRegex.test(expression)) {
-    const match = expression.match(ifRegex)
-    return { type: TokenType.IF, value:match?.groups, data: expression, isEndNeeded: true };
+    const match = expression.match(ifRegex);
+    return {
+      type: TokenType.IF,
+      value: match?.groups,
+      data: expression,
+      isEndNeeded: true,
+    };
   }
   if (forRegex.test(expression)) {
-    const match = expression.match(forRegex)
-    return { type: TokenType.FOR, value:match?.groups, data: expression, isEndNeeded: true };
+    const match = expression.match(forRegex);
+    return {
+      type: TokenType.FOR,
+      value: match?.groups,
+      data: expression,
+      isEndNeeded: true,
+    };
   }
   if (loopRegex.test(expression)) {
-    const match = expression.match(loopRegex)
-    return { type: TokenType.LOOP, value:match?.groups, data: expression, isEndNeeded: true };
+    const match = expression.match(loopRegex);
+    return {
+      type: TokenType.LOOP,
+      value: match?.groups,
+      data: expression,
+      isEndNeeded: true,
+    };
   }
   if (blockRegex.test(expression)) {
-    const match = expression.match(blockRegex)
-    return { type: TokenType.BLOCK, value:match?.groups, data: expression, isEndNeeded: true };
+    const match = expression.match(blockRegex);
+    return {
+      type: TokenType.BLOCK,
+      value: match?.groups,
+      data: expression,
+      isEndNeeded: true,
+    };
   }
   if (extendsRegex.test(expression)) {
-    const match = expression.match(extendsRegex)
-    return { type: TokenType.EXTEND, value:match?.groups, data: expression, isEndNeeded: false };
+    const match = expression.match(extendsRegex);
+    return {
+      type: TokenType.EXTEND,
+      value: match?.groups,
+      data: expression,
+      isEndNeeded: false,
+    };
   }
   if (endRegex.test(expression)) {
     var token = { type: TokenType.ENDIF, data: expression, isEndNeeded: false };
@@ -218,7 +243,9 @@ function tokenizeLogicalExpressions(
     return token;
   }
 
-  throw new Error(`:${line}:${col} => ${expression} : Unexpected template token`);
+  throw new Error(
+    `:${line}:${col} => ${expression} : Unexpected template token`,
+  );
 }
 
 function tokenizeText(expression: string): IToken {
@@ -232,8 +259,13 @@ function tokenizeVariableExpressions(
   col: number,
 ): IToken {
   if (variableRegex.test(expression)) {
-    const match = expression.match(variableRegex)
-    return { type: TokenType.VARIABLE, value:match?.groups, data: expression, isEndNeeded: false };
+    const match = expression.match(variableRegex);
+    return {
+      type: TokenType.VARIABLE,
+      value: match?.groups,
+      data: expression,
+      isEndNeeded: false,
+    };
   }
   throw new Error(`:${line}:${col} Unexpected variable format`);
 }
