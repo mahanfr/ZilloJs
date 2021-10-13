@@ -5,7 +5,8 @@ const indexContext = {
     "user":{
         "name":"ali",
         "age":20
-    }
+    },
+    "items":["foo","bar","baz"]
 }
 
 

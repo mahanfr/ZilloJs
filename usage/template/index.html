@@ -19,8 +19,8 @@
         <a class="navbar-brand" href="#">{{ user.name }}</a>
       </div>
     </nav>
-    {% for a in b %}
-      <h1>Hello World</h1>
+    {% for item in items %}
+      <h1>Hello World {{user.name}}</h1>
     {% endfor %}
     
     {% if user.age < 21 %}

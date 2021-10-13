@@ -1,12 +1,17 @@
 // TODO: Fix the problem with parsing strings that use single quote ('')
 
+import { parseTokens } from './compiler.js';
 import { tokenizeHtml, IToken, TokenType } from './lexer.js';
 
 export function parseHtml(html: string, context: any): string {
   let newHtml: string = '';
   const tokens: IToken[] = tokenizeHtml(html);
-  tokens.reverse();
-  newHtml = tokenToString(tokens, context);
+  //tokens.reverse();
+  //newHtml = tokenToString(tokens, context);
+  
+  const htmlList = parseTokens(tokens,context)
+  newHtml = htmlList.join('')
+
   return newHtml;
 }
 
