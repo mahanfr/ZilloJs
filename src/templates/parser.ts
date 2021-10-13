@@ -1,3 +1,5 @@
+// TODO: Fix the problem with parsing strings that use single quote ('')
+
 import { tokenizeHtml, IToken, TokenType } from './lexer.js';
 
 export function parseHtml(html: string, context: any): string {
@@ -46,8 +48,6 @@ function tokenToString(tokens:IToken[],context:any):string{
 
 function parseVariables(token: IToken,context:any): string {
   let variable;
-  // TODO: handel filters
-  let filter;
   try {
     const value:string = token.value['variable'];    
     const execString = transformReferencingToIndexing(value)
@@ -61,7 +61,6 @@ function parseVariables(token: IToken,context:any): string {
   else return '';
 }
 
-// TODO: implement this function
 function checkIfCondition(token: IToken, context: any):Boolean {
   const condition = token.value['condition']
   if(condition){
@@ -70,7 +69,7 @@ function checkIfCondition(token: IToken, context: any):Boolean {
       if(result !== undefined)
         return result
       else
-        throw new Error('Error parsing '+ token + ':'+ condition +' is not supported')
+        throw new Error('Error parsing '+ token + ':'+ condition +' is not a valid syntax')
     }
     else {
       const phrase = transformReferencingToIndexing(condition)
@@ -84,10 +83,29 @@ function checkIfCondition(token: IToken, context: any):Boolean {
   const comp1 = token.value['comp1']
   const comp2 = token.value['comp2']
   const op = token.value['op']
-  // TODO: Add check for operational conditions
   if(comp1 && comp2 && op){
-    
-    return false
+    let conditionString:string = ''
+    const indexedComp1:string = transformReferencingToIndexing(comp1)
+    const indexedComp2:string = transformReferencingToIndexing(comp2)
+    const isIndexedComp1Exist:boolean = new Function('context','return '+indexedComp1+'? true: false;')(context)
+    const isIndexedComp2Exist:boolean = new Function('context','return '+indexedComp2+'? true: false;')(context)
+    if(isIndexedComp1Exist){
+      conditionString += indexedComp1
+    }else{
+      conditionString += comp1
+    }
+    conditionString += ' '+ op + ' '
+    if(isIndexedComp2Exist){
+      conditionString += indexedComp2
+    }else{
+      conditionString += comp2
+    }
+    const result:boolean = new Function('context',"return ("+conditionString+");")(context)
+    if(result !== undefined)
+      return result
+    else{
+      throw new Error(conditionString+' '+result+' condition can not be parsed')
+    }
   }
   
   return false
