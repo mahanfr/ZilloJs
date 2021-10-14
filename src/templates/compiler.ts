@@ -11,9 +11,9 @@ interface IActiveToken {
 
 // TODO: add context for "For Loops"
 /**
- * transforming list of tokens to a list of strings in order to be 
+ * transforming list of tokens to a list of strings in order to be
  * inserted into another template or joined to create contents of a web page
- * @param tokens List of all tokens 
+ * @param tokens List of all tokens
  * @param context An object used for referencing variables
  * @returns List of parsed strings
  */
@@ -22,32 +22,31 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
   let parsedTokenList: string[] = [];
   // to store loop tags that need processing
   let activeStack: IActiveToken[] = [];
-  
+
   for (var i = 0; i < tokens.length; i++) {
     var token = tokens[i];
     /**
      * TEXT
      * add text items into result without any processing
      * this might happen multiple times for the same value
-    **/
+     **/
     if (token.type === TokenType.TEXT) {
       parsedTokenList.push(token.data);
-    } 
+    } else if (token.type === TokenType.VARIABLE) {
     /**
      * VARIABLE
      * add text to result after fetching its content from context
      * it will not show if cant find inside context
      * this might happen multiple times for the same value
-    **/
-    else if (token.type === TokenType.VARIABLE) {
+     **/
       parsedTokenList.push(parseVariables(token, context));
-    } 
+    }
     /**
      * FOR
      * for loops will revisit already visited tokens
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
+     **/
     // TODO: for readability change for loop to while loop
     else if (token.type === TokenType.FOR) {
       // getting list name from token ⚠️optional values
@@ -60,14 +59,14 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         'context',
         'if(' + rawList + '){return ' + rawList + ';}else{return null;}',
       )(context);
-      
+
       // TODO: Change Error to TemplateError
       if (!list) throw new Error(rawList + ' is null');
-      // Ignore process if length of for loop list is less or equal zero 
-      if(list.length <= 0){
+      // Ignore process if length of for loop list is less or equal zero
+      if (list.length <= 0) {
         // set index to after the end of for loop
-        i = endingTagIndex(tokens,i,TokenType.FOR,TokenType.ENDFOR)
-        continue
+        i = endingTagIndex(tokens, i, TokenType.FOR, TokenType.ENDFOR);
+        continue;
       }
       // add some information to activeStack to show that current token is open
       activeStack.push({
@@ -77,22 +76,21 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         cycles: list.length - 1,
         internalIndex: 0,
       });
-    } 
+    } else if (token.type === TokenType.ENDFOR) {
     /**
      * EndFor
-     * check internal index of for-loop from it's active statement 
+     * check internal index of for-loop from it's active statement
      * in the active stack and goes back to it's original index
      * the token itself will not be printed
-     * -- index of the main loop might change here -- 
-    **/
-    else if (token.type === TokenType.ENDFOR) {
+     * -- index of the main loop might change here --
+     **/
       const activeStatement = activeStack.pop();
       // console.log(activeStatement)
       if (!activeStatement) {
         // TODO: Change Error to TemplateError
         throw new Error('endfor tag without starting tag');
       }
-      if(activeStatement.type === TokenType.FOR){
+      if (activeStatement.type === TokenType.FOR) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
           continue;
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
@@ -107,20 +105,19 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           );
         }
       }
-      continue
-    } 
-    /** 
+      continue;
+    } else if (token.type === TokenType.LOOP) {
+    /**
      * LOOP
      * loop a set of tokens multiple times
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
-    else if(token.type === TokenType.LOOP){
+     **/
       let loopCycles: number = parseInt(token.value['times']);
-      if(loopCycles <= 0){
-        i = endingTagIndex(tokens,i,TokenType.LOOP,TokenType.ENDLOOP)
-        continue
-      }else {
+      if (loopCycles <= 0) {
+        i = endingTagIndex(tokens, i, TokenType.LOOP, TokenType.ENDLOOP);
+        continue;
+      } else {
         activeStack.push({
           type: token.type,
           index: i,
@@ -129,22 +126,21 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           internalIndex: 0,
         });
       }
-    }
+    } else if (token.type === TokenType.ENDLOOP) {
     /**
      * EndLoop
-     * check internal index of loop from it's active statement 
+     * check internal index of loop from it's active statement
      * in the active stack and goes back to it's original index
      * the token itself will not be printed
-     * -- index of the main loop might change here -- 
-    **/
-    else if(token.type === TokenType.ENDLOOP){
+     * -- index of the main loop might change here --
+     **/
       const activeStatement = activeStack.pop();
       // console.log(activeStatement)
       if (!activeStatement) {
         // TODO: Change Error to TemplateError
         throw new Error('endLoop tag without starting tag');
       }
-      if(activeStatement.type === TokenType.LOOP){
+      if (activeStatement.type === TokenType.LOOP) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
           continue;
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
@@ -159,34 +155,32 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           );
         }
       }
-      continue
-    }
-    /** 
+      continue;
+    } else if (token.type === TokenType.IF) {
+    /**
      * IF
      * shows a set of tokens based on truth of a condition
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
-    else if(token.type === TokenType.IF){
-      if(checkIfCondition(token, context)){
-        continue
-      }else{
-        i = endingTagIndex(tokens,i,TokenType.IF,TokenType.ENDIF)
+     **/
+      if (checkIfCondition(token, context)) {
+        continue;
+      } else {
+        i = endingTagIndex(tokens, i, TokenType.IF, TokenType.ENDIF);
       }
-      continue
+      continue;
     }
   }
   // Return the final result
   return parsedTokenList;
 }
 
-
 /**
  * Function that transform variable tokens to text by finding the correct
  * reference
  * @param token variable token that needs to be parsed
  * @param context used to reference correct values
- * @returns parse value from a reference to only a string 
+ * @returns parse value from a reference to only a string
  */
 function parseVariables(token: IToken, context: any): string {
   let variable;
@@ -209,9 +203,9 @@ function parseVariables(token: IToken, context: any): string {
  * to ones that use brackets
  * @example
  * string "user.name" to string "context['user']['name']"
- * @param variableString string of the variable used in variable tokens 
+ * @param variableString string of the variable used in variable tokens
  * if-conditions and for-loops
- * @param objectString optional string that will be the context object and 
+ * @param objectString optional string that will be the context object and
  * used for referencing
  * @returns string that includes the transformed version of given variable
  * @todo handel indexing a[b] along side of referencing a.b
@@ -230,7 +224,7 @@ function transformReferencingToIndexing(
 }
 
 /**
- * Checking the condition by parsing values and data of the 
+ * Checking the condition by parsing values and data of the
  * passed token with the type of TokenType.IF
  * @example
  * token.data of "if true" should return true
@@ -307,7 +301,7 @@ function checkIfCondition(token: IToken, context: any): Boolean {
 }
 
 /**
- * finding the end token of a given token by searching through a 
+ * finding the end token of a given token by searching through a
  * list of tokens starting form the given index and finding the endingToken
  * @param tokensList List of all tokens
  * @param currentIndex index of the current token inside the given list
@@ -315,22 +309,26 @@ function checkIfCondition(token: IToken, context: any): Boolean {
  * @param endingToken Type of the ending token
  * @returns index of the ending token
  */
-function endingTagIndex(tokensList: IToken[], currentIndex: number, startingToken:TokenType, endingToken: TokenType): number {
-  let i = currentIndex + 1
-  let activeTokenFlag:Boolean = false
-  while(i<tokensList.length){
-    if(tokensList[i].type === startingToken){
-      activeTokenFlag = true
+function endingTagIndex(
+  tokensList: IToken[],
+  currentIndex: number,
+  startingToken: TokenType,
+  endingToken: TokenType,
+): number {
+  let i = currentIndex + 1;
+  let activeTokenFlag: Boolean = false;
+  while (i < tokensList.length) {
+    if (tokensList[i].type === startingToken) {
+      activeTokenFlag = true;
     }
-    if(tokensList[i].type === endingToken){
-      if(activeTokenFlag){
-        activeTokenFlag = false
-      }else{
-        return i
+    if (tokensList[i].type === endingToken) {
+      if (activeTokenFlag) {
+        activeTokenFlag = false;
+      } else {
+        return i;
       }
     }
     i += 1;
   }
-  throw new Error(tokensList[currentIndex]+" has no ending tag")
+  throw new Error(tokensList[currentIndex] + ' has no ending tag');
 }
-
