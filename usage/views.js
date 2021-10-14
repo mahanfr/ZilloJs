@@ -6,7 +6,7 @@ const indexContext = {
         "name":"ali",
         "age":20
     },
-    "items":["foo","bar","baz"]
+    "items":['foo','bar']
 }
 
 
