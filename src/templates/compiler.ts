@@ -54,6 +54,13 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           'Illegal value: internalIndex can not be grater than cycles',
         );
       }
+    } else if(token.type === TokenType.IF){
+      if(checkIfCondition(token, context)){
+        continue
+      }else{
+        i = endingTagIndex(tokens,i,TokenType.IF,TokenType.ENDIF)
+      }
+      continue
     }
   }
   return parsedTokenList;
@@ -87,3 +94,91 @@ function transformReferencingToIndexing(
   }
   return execString;
 }
+
+function checkIfCondition(token: IToken, context: any): Boolean {
+  const condition = token.value['condition'];
+  if (condition) {
+    if (condition === 'true' || condition === 'false') {
+      let result = new Function('return (' + condition + ')? true : false;')();
+      if (result !== undefined) return result;
+      else
+        throw new Error(
+          'Error parsing ' + token + ':' + condition + ' is not a valid syntax',
+        );
+    } else {
+      const phrase = transformReferencingToIndexing(condition);
+      let result = new Function(
+        'context',
+        'return (' + phrase + ')? true : false;',
+      )(context);
+      if (result !== undefined) return result;
+      else
+        throw new Error(
+          'Error parsing ' +
+            token +
+            ':' +
+            condition +
+            ' is not available in context',
+        );
+    }
+  }
+  const comp1 = token.value['comp1'];
+  const comp2 = token.value['comp2'];
+  const op = token.value['op'];
+  if (comp1 && comp2 && op) {
+    let conditionString: string = '';
+    const indexedComp1: string = transformReferencingToIndexing(comp1);
+    const indexedComp2: string = transformReferencingToIndexing(comp2);
+    const isIndexedComp1Exist: boolean = new Function(
+      'context',
+      'return ' + indexedComp1 + '? true: false;',
+    )(context);
+    const isIndexedComp2Exist: boolean = new Function(
+      'context',
+      'return ' + indexedComp2 + '? true: false;',
+    )(context);
+    if (isIndexedComp1Exist) {
+      conditionString += indexedComp1;
+    } else {
+      conditionString += comp1;
+    }
+    conditionString += ' ' + op + ' ';
+    if (isIndexedComp2Exist) {
+      conditionString += indexedComp2;
+    } else {
+      conditionString += comp2;
+    }
+    const result: boolean = new Function(
+      'context',
+      'return (' + conditionString + ');',
+    )(context);
+    if (result !== undefined) return result;
+    else {
+      throw new Error(
+        conditionString + ' ' + result + ' condition can not be parsed',
+      );
+    }
+  }
+
+  return false;
+}
+
+function endingTagIndex(tokensList: IToken[], currentIndex: number, startingToken:TokenType, endingToken: TokenType): number {
+  let i = currentIndex + 1
+  let activeTokenFlag:Boolean = false
+  while(i<tokensList.length){
+    if(tokensList[i].type === startingToken){
+      activeTokenFlag = true
+    }
+    if(tokensList[i].type === endingToken){
+      if(activeTokenFlag){
+        activeTokenFlag = false
+      }else{
+        return i
+      }
+    }
+    i += 1;
+  }
+  throw new Error(tokensList[currentIndex]+" has no ending tag")
+}
+
