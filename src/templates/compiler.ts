@@ -1,7 +1,9 @@
 // TODO: Fix the problem with parsing strings that use single quote ('')
-// TODO: Add blocks and extends functionalities 
+// TODO: Add blocks and extends functionalities
 import { parseTokens } from './parser.js';
 import { tokenizeHtml, IToken } from './lexer.js';
+import { readFileSync } from 'fs';
+import { TemplateFileError } from './errors.js';
 
 /**
  * gets html file and returns html string customized using context
@@ -9,15 +11,25 @@ import { tokenizeHtml, IToken } from './lexer.js';
  * @param context data that need to be inserted inside html
  * @returns html formatted text that has been customized using context
  */
-// TODO: get file instead of contents of the file
-export function compileTemplate(html: string, context: any): string {
+export function compileTemplate(
+  templateFilePath: string,
+  context: any,
+): string {
   let newHtml: string = '';
-  const tokens: IToken[] = tokenizeHtml(html);
+  let htmlContent: string = '';
+  try {
+    htmlContent = readFileSync(templateFilePath).toString();
+  } catch {
+    throw new TemplateFileError(
+      'no such file or directory ' + '(file:///' + templateFilePath + ')',
+    );
+  }
+  const tokens: IToken[] = tokenizeHtml(htmlContent);
   //tokens.reverse();
   //newHtml = tokenToString(tokens, context);
-  
-  const htmlList = parseTokens(tokens,context)
-  newHtml = htmlList.join('')
+
+  const htmlList = parseTokens(tokens, context);
+  newHtml = htmlList.join('');
 
   return newHtml;
 }

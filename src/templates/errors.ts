@@ -47,7 +47,7 @@ class TemplateParsingError extends Error {
   ) {
     super(`(${file}:${line}:${col}): ${message}`);
     // Set the prototype explicitly.
-    Object.setPrototypeOf(this, TemplateTokenError.prototype);
+    Object.setPrototypeOf(this, TemplateParsingError.prototype);
   }
 
   /**
@@ -57,5 +57,23 @@ class TemplateParsingError extends Error {
    */
   public getErrorTemplate() {
     console.error('Not implemented yet');
+  }
+}
+
+export class TemplateFileError extends Error {
+  constructor(public message: string) {
+    super(message);
+    this.name = 'TemplateFileError';
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(this, TemplateFileError.prototype);
+  }
+
+  /**
+   * GetErrorTemplate:
+   * Creates an Html page to show error information
+   * @returns A Template created using the information that shows when in debug mode
+   */
+  public getErrorTemplate() {
+    throw new Error('Not implemented yet');
   }
 }

@@ -1,5 +1,5 @@
 import { compileTemplate } from './templates/compiler.js';
-import fs from 'fs';
+import { TemplateFileError } from './templates/errors.js';
 
 interface IResponseHelper {
   statusCode: number;
@@ -16,7 +16,7 @@ interface IResponseHelper {
  * function indexView(request){
  *   return render(request, './template/index.html',{"title":"my title"})
  * }
- * @param request gets request that got passed by user 
+ * @param request gets request that got passed by user
  * @param template location of template
  * @param context data that needs to be inserted inside the template
  * @returns void
@@ -32,17 +32,16 @@ function render(
     body: 'hello world',
   };
 
-  // TODO: Fix problems with same error for template and file
   try {
-    const data = fs.readFileSync(template);
-    if (context) {
-      context['request'] = request.method;
-    }
-    const parseData = compileTemplate(data.toString(), context);
+    // TODO: insert some of request inside context
+    const parseData = compileTemplate(template, context);
     responseHelper.statusCode = 200;
     responseHelper.body = parseData;
   } catch (e) {
-    console.log(e);
+    if (e instanceof TemplateFileError) {
+      // TODO: Add custom error page for debug
+      console.error(e);
+    }
     responseHelper.statusCode = 404;
     console.log(responseHelper.statusCode);
     responseHelper.body = '404 Error';
