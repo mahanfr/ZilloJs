@@ -1,4 +1,4 @@
-import { parseHtml } from './templates/parser.js';
+import { compileTemplate } from './templates/compiler.js';
 import fs from 'fs';
 
 interface IResponseHelper {
@@ -8,7 +8,19 @@ interface IResponseHelper {
   head?: any;
 }
 
-// Render function to higher the framework level
+/**
+ * Renders an Html page by parsing template using given context
+ * and it will send a response to user based on the request
+ * @example
+ * import {render} from './views.js'
+ * function indexView(request){
+ *   return render(request, './template/index.html',{"title":"my title"})
+ * }
+ * @param request gets request that got passed by user 
+ * @param template location of template
+ * @param context data that needs to be inserted inside the template
+ * @returns void
+ */
 function render(
   request: any,
   template: string,
@@ -26,7 +38,7 @@ function render(
     if (context) {
       context['request'] = request.method;
     }
-    const parseData = parseHtml(data.toString(), context);
+    const parseData = compileTemplate(data.toString(), context);
     responseHelper.statusCode = 200;
     responseHelper.body = parseData;
   } catch (e) {

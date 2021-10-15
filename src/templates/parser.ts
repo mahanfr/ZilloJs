@@ -1,64 +1,187 @@
 // TODO: Fix the problem with parsing strings that use single quote ('')
+import { IToken, TokenType } from './lexer.js';
 
-import { parseTokens } from './compiler.js';
-import { tokenizeHtml, IToken, TokenType } from './lexer.js';
-
-export function parseHtml(html: string, context: any): string {
-  let newHtml: string = '';
-  const tokens: IToken[] = tokenizeHtml(html);
-  //tokens.reverse();
-  //newHtml = tokenToString(tokens, context);
-  
-  const htmlList = parseTokens(tokens,context)
-  newHtml = htmlList.join('')
-
-  return newHtml;
+interface IActiveToken {
+  type: TokenType;
+  index: number;
+  cycles: number;
+  internalIndex: number;
+  list: any;
 }
 
-function tokenToString(tokens: IToken[], context: any): string {
-  const token: IToken | undefined = tokens.pop();
-  if (!token) {
-    return '';
-  }
-  if (tokens.length === 0) {
-    return token.data;
-  }
-  if (token.type === TokenType.TEXT) {
-    return token.data + tokenToString(tokens, context);
-  } else if (token.type === TokenType.VARIABLE) {
-    return parseVariables(token, context) + tokenToString(tokens, context);
-  } else if (token.type === TokenType.IF) {
-    let positionalTokens = findTokensInclosed(
-      tokens,
-      TokenType.IF,
-      TokenType.ENDIF,
-    );
-    if (checkIfCondition(token, context)) {
-      return (
-        tokenToString(positionalTokens.in, context) +
-        tokenToString(positionalTokens.out, context)
-      );
+// TODO: add context for "For Loops"
+/**
+ * transforming list of tokens to a list of strings in order to be
+ * inserted into another template or joined to create contents of a web page
+ * @param tokens List of all tokens
+ * @param context An object used for referencing variables
+ * @returns List of parsed strings
+ */
+export function parseTokens(tokens: IToken[], context: any): string[] {
+  // to store the final result
+  let parsedTokenList: string[] = [];
+  // to store loop tags that need processing
+  let activeStack: IActiveToken[] = [];
+
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    /**
+     * TEXT
+     * add text items into result without any processing
+     * this might happen multiple times for the same value
+     **/
+    if (token.type === TokenType.TEXT) {
+      parsedTokenList.push(token.data);
+    } else if (token.type === TokenType.VARIABLE) {
+    /**
+     * VARIABLE
+     * add text to result after fetching its content from context
+     * it will not show if cant find inside context
+     * this might happen multiple times for the same value
+     **/
+      parsedTokenList.push(parseVariables(token, context));
     }
-    return tokenToString(positionalTokens.out, context);
-  } else if (token.type === TokenType.LOOP) {
-    let loopCycles: number = parseInt(token.value['times']);
-    let loopResult: string = '';
-    var positionalTokens = findTokensInclosed(
-      tokens,
-      TokenType.LOOP,
-      TokenType.ENDLOOP,
-    );
-    const insideString = tokenToString(positionalTokens.in, context);
-    while (loopCycles > 0) {
-      loopResult += insideString;
-      loopCycles--;
+    /**
+     * FOR
+     * for loops will revisit already visited tokens
+     * the token itself will not be printed
+     * -- index of the main loop might change here --
+     **/
+    // TODO: for readability change for loop to while loop
+    else if (token.type === TokenType.FOR) {
+      // getting list name from token ⚠️optional values
+      let rawList: any = token.value['items'];
+      // transforming itemName to context[itemName] and user.itemName to context[user][itemName]
+      rawList = transformReferencingToIndexing(rawList);
+
+      // Getting list of data dynamically
+      const list: any = new Function(
+        'context',
+        'if(' + rawList + '){return ' + rawList + ';}else{return null;}',
+      )(context);
+
+      // TODO: Change Error to TemplateError
+      if (!list) throw new Error(rawList + ' is null');
+      // Ignore process if length of for loop list is less or equal zero
+      if (list.length <= 0) {
+        // set index to after the end of for loop
+        i = endingTagIndex(tokens, i, TokenType.FOR, TokenType.ENDFOR);
+        continue;
+      }
+      // add some information to activeStack to show that current token is open
+      activeStack.push({
+        type: token.type,
+        index: i,
+        list: list,
+        cycles: list.length - 1,
+        internalIndex: 0,
+      });
+    } else if (token.type === TokenType.ENDFOR) {
+    /**
+     * EndFor
+     * check internal index of for-loop from it's active statement
+     * in the active stack and goes back to it's original index
+     * the token itself will not be printed
+     * -- index of the main loop might change here --
+     **/
+      const activeStatement = activeStack.pop();
+      // console.log(activeStatement)
+      if (!activeStatement) {
+        // TODO: Change Error to TemplateError
+        throw new Error('endfor tag without starting tag');
+      }
+      if (activeStatement.type === TokenType.FOR) {
+        if (activeStatement.internalIndex === activeStatement.cycles) {
+          continue;
+        } else if (activeStatement.internalIndex < activeStatement.cycles) {
+          activeStatement.internalIndex += 1;
+          i = activeStatement.index;
+          activeStack.push(activeStatement);
+          continue;
+        } else if (activeStatement.internalIndex > activeStatement.cycles) {
+          // TODO: Change Error to TemplateError
+          throw new Error(
+            'Illegal value: internalIndex can not be grater than cycles',
+          );
+        }
+      }
+      continue;
+    } else if (token.type === TokenType.LOOP) {
+    /**
+     * LOOP
+     * loop a set of tokens multiple times
+     * the token itself will not be printed
+     * -- index of the main loop might change here --
+     **/
+      let loopCycles: number = parseInt(token.value['times']);
+      if (loopCycles <= 0) {
+        i = endingTagIndex(tokens, i, TokenType.LOOP, TokenType.ENDLOOP);
+        continue;
+      } else {
+        activeStack.push({
+          type: token.type,
+          index: i,
+          list: undefined,
+          cycles: loopCycles - 1,
+          internalIndex: 0,
+        });
+      }
+    } else if (token.type === TokenType.ENDLOOP) {
+    /**
+     * EndLoop
+     * check internal index of loop from it's active statement
+     * in the active stack and goes back to it's original index
+     * the token itself will not be printed
+     * -- index of the main loop might change here --
+     **/
+      const activeStatement = activeStack.pop();
+      // console.log(activeStatement)
+      if (!activeStatement) {
+        // TODO: Change Error to TemplateError
+        throw new Error('endLoop tag without starting tag');
+      }
+      if (activeStatement.type === TokenType.LOOP) {
+        if (activeStatement.internalIndex === activeStatement.cycles) {
+          continue;
+        } else if (activeStatement.internalIndex < activeStatement.cycles) {
+          activeStatement.internalIndex += 1;
+          i = activeStatement.index;
+          activeStack.push(activeStatement);
+          continue;
+        } else if (activeStatement.internalIndex > activeStatement.cycles) {
+          // TODO: Change Error to TemplateError
+          throw new Error(
+            'Illegal value: internalIndex can not be grater than cycles',
+          );
+        }
+      }
+      continue;
+    } else if (token.type === TokenType.IF) {
+    /**
+     * IF
+     * shows a set of tokens based on truth of a condition
+     * the token itself will not be printed
+     * -- index of the main loop might change here --
+     **/
+      if (checkIfCondition(token, context)) {
+        continue;
+      } else {
+        i = endingTagIndex(tokens, i, TokenType.IF, TokenType.ENDIF);
+      }
+      continue;
     }
-    return loopResult + tokenToString(positionalTokens.out, context);
-  } else {
-    return tokenToString(tokens, context);
   }
+  // Return the final result
+  return parsedTokenList;
 }
 
+/**
+ * Function that transform variable tokens to text by finding the correct
+ * reference
+ * @param token variable token that needs to be parsed
+ * @param context used to reference correct values
+ * @returns parse value from a reference to only a string
+ */
 function parseVariables(token: IToken, context: any): string {
   let variable;
   try {
@@ -74,6 +197,41 @@ function parseVariables(token: IToken, context: any): string {
   else return '';
 }
 
+// TODO: handel indexing a[b] along side of referencing a.b
+/**
+ * Change string that uses "." (dot) to indicate that is referencing the child
+ * to ones that use brackets
+ * @example
+ * string "user.name" to string "context['user']['name']"
+ * @param variableString string of the variable used in variable tokens
+ * if-conditions and for-loops
+ * @param objectString optional string that will be the context object and
+ * used for referencing
+ * @returns string that includes the transformed version of given variable
+ * @todo handel indexing a[b] along side of referencing a.b
+ */
+function transformReferencingToIndexing(
+  variableString: string,
+  objectString = 'context',
+): string {
+  const values = variableString.split('.');
+  let execString = objectString;
+  // user['address']['city']
+  for (let i in values) {
+    execString += "['" + values[i] + "']";
+  }
+  return execString;
+}
+
+/**
+ * Checking the condition by parsing values and data of the
+ * passed token with the type of TokenType.IF
+ * @example
+ * token.data of "if true" should return true
+ * @param token the token that needed to be checked
+ * @param context Used to find reference to correct values
+ * @returns condition boolean of the given token
+ */
 function checkIfCondition(token: IToken, context: any): Boolean {
   const condition = token.value['condition'];
   if (condition) {
@@ -142,57 +300,35 @@ function checkIfCondition(token: IToken, context: any): Boolean {
   return false;
 }
 
-interface IPositionalTokens {
-  in: IToken[];
-  out: IToken[];
-}
-
-function findTokensInclosed(
-  tokens: IToken[],
-  startingType: TokenType,
-  endType: TokenType,
-): IPositionalTokens {
-  let statementsFlag: Boolean = false;
-  const tokensStack: IToken[] = [];
-  /**
-   * [if] <- [end] => [] until [] <- [end] => return
-   * if an opening Token pops then the flags become true and
-   * when seen a ending Token it becomes false
-   * if ending token comes up and the flag is false then function returns
-   */
-  while (tokens.length > 0) {
-    const token = tokens.pop();
-    if (token?.type === startingType) {
-      statementsFlag = true;
-      tokensStack.push(token);
-      continue;
+/**
+ * finding the end token of a given token by searching through a
+ * list of tokens starting form the given index and finding the endingToken
+ * @param tokensList List of all tokens
+ * @param currentIndex index of the current token inside the given list
+ * @param startingToken Type of the stating token
+ * @param endingToken Type of the ending token
+ * @returns index of the ending token
+ */
+function endingTagIndex(
+  tokensList: IToken[],
+  currentIndex: number,
+  startingToken: TokenType,
+  endingToken: TokenType,
+): number {
+  let i = currentIndex + 1;
+  let activeTokenFlag: Boolean = false;
+  while (i < tokensList.length) {
+    if (tokensList[i].type === startingToken) {
+      activeTokenFlag = true;
     }
-    if (token?.type === endType) {
-      if (statementsFlag === false) {
-        return { in: tokensStack.reverse(), out: tokens };
+    if (tokensList[i].type === endingToken) {
+      if (activeTokenFlag) {
+        activeTokenFlag = false;
       } else {
-        // If statementsFlag is true
-        statementsFlag = false;
-        tokensStack.push(token);
+        return i;
       }
-      continue;
     }
-    if (token) tokensStack.push(token);
+    i += 1;
   }
-
-  return { in: [], out: tokens };
-}
-
-// TODO: handel indexing a[b] along side of referencing a.b
-function transformReferencingToIndexing(
-  variableString: string,
-  objectString = 'context',
-): string {
-  const values = variableString.split('.');
-  let execString = objectString;
-  // user['address']['city']
-  for (let i in values) {
-    execString += "['" + values[i] + "']";
-  }
-  return execString;
+  throw new Error(tokensList[currentIndex] + ' has no ending tag');
 }
