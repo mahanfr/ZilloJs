@@ -6,6 +6,7 @@ interface IActiveToken {
   index: number;
   cycles: number;
   internalIndex: number;
+  listItemContextName: string;
   list: any;
 }
 
@@ -23,6 +24,7 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
   // to store loop tags that need processing
   let activeStack: IActiveToken[] = [];
 
+  // TODO: for readability change for loop to while loop
   for (var i = 0; i < tokens.length; i++) {
     var token = tokens[i];
     /**
@@ -32,13 +34,23 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
      **/
     if (token.type === TokenType.TEXT) {
       parsedTokenList.push(token.data);
-    } else if (token.type === TokenType.VARIABLE) {
+    } 
     /**
      * VARIABLE
      * add text to result after fetching its content from context
      * it will not show if cant find inside context
      * this might happen multiple times for the same value
      **/
+    else if (token.type === TokenType.VARIABLE) {
+      const activeContext = activeStack.pop()
+      if(activeContext){
+        if(activeContext?.type === TokenType.FOR){
+          context[activeContext.listItemContextName] = activeContext.list[activeContext.internalIndex]
+          activeStack.push(activeContext)
+        }else{
+          activeStack.push(activeContext)
+        }
+      }
       parsedTokenList.push(parseVariables(token, context));
     }
     /**
@@ -47,13 +59,14 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
      * the token itself will not be printed
      * -- index of the main loop might change here --
      **/
-    // TODO: for readability change for loop to while loop
     else if (token.type === TokenType.FOR) {
       // getting list name from token ⚠️optional values
+      
       let rawList: any = token.value['items'];
+      let listItemContextName = token.value['item']
+      if(!listItemContextName) throw new Error('No context name provided')
       // transforming itemName to context[itemName] and user.itemName to context[user][itemName]
       rawList = transformReferencingToIndexing(rawList);
-
       // Getting list of data dynamically
       const list: any = new Function(
         'context',
@@ -74,6 +87,7 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         index: i,
         list: list,
         cycles: list.length - 1,
+        listItemContextName: listItemContextName,
         internalIndex: 0,
       });
     } else if (token.type === TokenType.ENDFOR) {
@@ -123,6 +137,7 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           index: i,
           list: undefined,
           cycles: loopCycles - 1,
+          listItemContextName:'',
           internalIndex: 0,
         });
       }
