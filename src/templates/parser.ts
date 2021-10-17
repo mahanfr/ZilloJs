@@ -23,8 +23,8 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
   // to store loop tags that need processing
   let activeStack: IActiveToken[] = [];
 
-  // TODO: for readability change for loop to while loop
-  for (var i = 0; i < tokens.length; i++) {
+  let i = 0
+  while (i < tokens.length) {
     var token = tokens[i];
     /**
      * TEXT
@@ -78,17 +78,17 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
       if (list.length <= 0) {
         // set index to after the end of for loop
         i = endingTagIndex(tokens, i, TokenType.FOR, TokenType.ENDFOR);
-        continue;
+      }else{
+        // add some information to activeStack to show that current token is open
+        activeStack.push({
+          type: token.type,
+          index: i,
+          list: list,
+          cycles: list.length - 1,
+          listItemContextName: listItemContextName,
+          internalIndex: 0,
+        });
       }
-      // add some information to activeStack to show that current token is open
-      activeStack.push({
-        type: token.type,
-        index: i,
-        list: list,
-        cycles: list.length - 1,
-        listItemContextName: listItemContextName,
-        internalIndex: 0,
-      });
     } 
     /**
      * EndFor
@@ -107,12 +107,10 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
       if (activeStatement.type === TokenType.FOR) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
           delete context[activeStatement.listItemContextName]
-          continue;
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
           activeStatement.internalIndex += 1;
           i = activeStatement.index;
           activeStack.push(activeStatement);
-          continue;
         } else if (activeStatement.internalIndex > activeStatement.cycles) {
           // TODO: Change Error to TemplateError
           throw new Error(
@@ -120,7 +118,6 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           );
         }
       }
-      continue;
     } 
     /**
      * LOOP
@@ -132,7 +129,6 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
       let loopCycles: number = parseInt(token.value['times']);
       if (loopCycles <= 0) {
         i = endingTagIndex(tokens, i, TokenType.LOOP, TokenType.ENDLOOP);
-        continue;
       } else {
         activeStack.push({
           type: token.type,
@@ -160,12 +156,12 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
       }
       if (activeStatement.type === TokenType.LOOP) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
+          i++
           continue;
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
           activeStatement.internalIndex += 1;
           i = activeStatement.index;
           activeStack.push(activeStatement);
-          continue;
         } else if (activeStatement.internalIndex > activeStatement.cycles) {
           // TODO: Change Error to TemplateError
           throw new Error(
@@ -173,7 +169,6 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           );
         }
       }
-      continue;
     }
     /**
      * IF
@@ -182,14 +177,11 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
      * -- index of the main loop might change here --
     **/
     else if (token.type === TokenType.IF) {
-      if (checkIfCondition(token, context)) {
-        continue;
-      } else {
+      if (!checkIfCondition(token, context)) {
         i = endingTagIndex(tokens, i, TokenType.IF, TokenType.ENDIF);
       }
-      continue;
     }
-
+    i++; 
   }
   // Return the final result
   return parsedTokenList;
