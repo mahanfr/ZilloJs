@@ -10,7 +10,6 @@ interface IActiveToken {
   list: any;
 }
 
-// TODO: add context for "For Loops"
 /**
  * transforming list of tokens to a list of strings in order to be
  * inserted into another template or joined to create contents of a web page
@@ -90,14 +89,15 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         listItemContextName: listItemContextName,
         internalIndex: 0,
       });
-    } else if (token.type === TokenType.ENDFOR) {
+    } 
     /**
      * EndFor
      * check internal index of for-loop from it's active statement
      * in the active stack and goes back to it's original index
      * the token itself will not be printed
      * -- index of the main loop might change here --
-     **/
+    **/
+    else if (token.type === TokenType.ENDFOR) {
       const activeStatement = activeStack.pop();
       // console.log(activeStatement)
       if (!activeStatement) {
@@ -106,6 +106,7 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
       }
       if (activeStatement.type === TokenType.FOR) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
+          delete context[activeStatement.listItemContextName]
           continue;
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
           activeStatement.internalIndex += 1;
@@ -120,13 +121,14 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         }
       }
       continue;
-    } else if (token.type === TokenType.LOOP) {
+    } 
     /**
      * LOOP
      * loop a set of tokens multiple times
      * the token itself will not be printed
      * -- index of the main loop might change here --
-     **/
+    **/
+    else if (token.type === TokenType.LOOP) {
       let loopCycles: number = parseInt(token.value['times']);
       if (loopCycles <= 0) {
         i = endingTagIndex(tokens, i, TokenType.LOOP, TokenType.ENDLOOP);
@@ -141,14 +143,15 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
           internalIndex: 0,
         });
       }
-    } else if (token.type === TokenType.ENDLOOP) {
+    } 
     /**
      * EndLoop
      * check internal index of loop from it's active statement
      * in the active stack and goes back to it's original index
      * the token itself will not be printed
      * -- index of the main loop might change here --
-     **/
+    **/
+    else if (token.type === TokenType.ENDLOOP) {
       const activeStatement = activeStack.pop();
       // console.log(activeStatement)
       if (!activeStatement) {
@@ -171,13 +174,14 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         }
       }
       continue;
-    } else if (token.type === TokenType.IF) {
+    }
     /**
      * IF
      * shows a set of tokens based on truth of a condition
      * the token itself will not be printed
      * -- index of the main loop might change here --
-     **/
+    **/
+    else if (token.type === TokenType.IF) {
       if (checkIfCondition(token, context)) {
         continue;
       } else {
@@ -185,6 +189,7 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
       }
       continue;
     }
+
   }
   // Return the final result
   return parsedTokenList;
