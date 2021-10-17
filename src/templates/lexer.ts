@@ -34,7 +34,7 @@ const forRegex =
   /{%[\s]*for[\s]+(?<item>[\w\d_\.]+)[\s]+in[\s]+(?<items>[\w\d_\.]+)[\s]*%}/;
 const loopRegex = /{%[\s]*loop[\s]+(?<times>[0-9]+)[\s]*%}/;
 const blockRegex = /{%[\s]*block[\s]+(?<block>[\w_]+)[\s]*%}/;
-const extendsRegex = /{%[\s]*extends[\s]+(?<extend>[\w_]+)[\s]*%}/;
+const extendsRegex = /{%[\s]*extends[\s]+(?<extend>[\w\d\"\/\'_\.]+)[\s]*%}/;
 const endRegex =
   /{%[\s]*endfor[\s]*%}|{%[\s]*endif[\s]*%}|{%[\s]*endloop[\s]*%}|{%[\s]*endblock[\s]*%}/;
 const variableRegex =
@@ -242,7 +242,7 @@ function tokenizeLogicalExpressions(
     }
     return token;
   }
-
+  //TODO: fix unsupported Tokens not braking everything
   throw new Error(
     `:${line}:${col} => ${expression} : Unexpected template token`,
   );

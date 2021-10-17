@@ -10,6 +10,12 @@ interface IActiveToken {
   list: any;
 }
 
+export interface IBlock{
+  tag:string;
+  referenceFile: string;
+  data: string[]
+}
+
 /**
  * transforming list of tokens to a list of strings in order to be
  * inserted into another template or joined to create contents of a web page
@@ -17,11 +23,15 @@ interface IActiveToken {
  * @param context An object used for referencing variables
  * @returns List of parsed strings
  */
-export function parseTokens(tokens: IToken[], context: any): string[] {
+export function parseTokens(tokens: IToken[], context: any): IBlock[] {
   // to store the final result
   let parsedTokenList: string[] = [];
   // to store loop tags that need processing
   let activeStack: IActiveToken[] = [];
+
+  let baseFile: string = ''
+  let currentBlockTag : string = ''
+  let blockList: IBlock[] = []
 
   let i = 0
   while (i < tokens.length) {
@@ -181,10 +191,42 @@ export function parseTokens(tokens: IToken[], context: any): string[] {
         i = endingTagIndex(tokens, i, TokenType.IF, TokenType.ENDIF);
       }
     }
+
+    else if(token.type === TokenType.EXTEND){
+      baseFile = token.value['extend']
+      baseFile = baseFile.replace(/['"]+/g, '')
+    }
+
+    else if(token.type === TokenType.BLOCK){
+      const blockTag = token.value['block']
+      if(!blockTag) throw new Error("No Block Tag");
+      currentBlockTag = blockTag
+      blockList.push({
+        tag:'block-' + Math.floor(Math.random()*1000),
+        referenceFile: baseFile,
+        data: parsedTokenList
+      })
+      parsedTokenList = []
+    }
+
+    else if(token.type === TokenType.ENDBLOCK){
+      blockList.push({
+        tag: currentBlockTag,
+        referenceFile: baseFile,
+        data: parsedTokenList
+      })
+      parsedTokenList = []
+    }
     i++; 
   }
+  blockList.push({
+    tag:'block-' + Math.floor(Math.random()*1000),
+    referenceFile: baseFile,
+    data: parsedTokenList
+  })
+  parsedTokenList = []
   // Return the final result
-  return parsedTokenList;
+  return blockList;
 }
 
 /**

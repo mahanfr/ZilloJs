@@ -1,55 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU"
-      crossorigin="anonymous"
-    />
-    <title>{{ title }}</title>
-  </head>
-  {! comment !}
-  <body>
-    <nav class="navbar navbar-light bg-light">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#">{{ user.name }}</a>
-      </div>
-    </nav>
-    {% for item in items %}
-      <h1>Hello World {{item}}</h1>
-    {% endfor %}
+{% extends "usage/template/base.html" %}
 
-    {% if user.age < 21 %}
-      <h1>you should not see {{ user.name }}</h1>
-      <h1>you should not see this</h1>
-      {% if true %}
-        <p>bro, You are fbi</p>
-      {% endif %}
+{% block title %}
+{{ title }}
+{% endblock %}
+
+{! comment !}
+{% block body %}
+  {% for item in items %}
+    <h1>Hello World {{item}}</h1>
+  {% endfor %}
+
+  {% if user.age < 21 %}
+    <h1>you should not see {{ user.name }}</h1>
+    <h1>you should not see this</h1>
+    {% if true %}
+      <p>bro, You are fbi</p>
     {% endif %}
-    
-    {% loop 3 %}
+  {% endif %}
+  
+  {% loop 3 %}
+    {% if true %}
       {% if true %}
-        {% if true %}
-        <a href="#">link1</a>
-        {% endif %}
-        {% if false %}
-        <a href="#">link2</a>
-        {% endif %}
-        <h3>looping boys!{{user.age}}</h3>
+      <a href="#">link1</a>
       {% endif %}
-    {% endloop %}
-
-    <footer>
-      this is footer
-    </footer>
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-      crossorigin="anonymous"
-    ></script>
-  </body>
-</html>
+      {% if false %}
+      <a href="#">link2</a>
+      {% endif %}
+      <h3>looping boys!{{user.age}}</h3>
+    {% endif %}
+  {% endloop %}
+{% endblock %}
