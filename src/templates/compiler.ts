@@ -3,6 +3,7 @@ import { IBlock, parseTokens } from './parser.js';
 import { tokenizeHtml, IToken } from './lexer.js';
 import { readFileSync } from 'fs';
 import { TemplateFileError } from './errors.js';
+import path from 'path'
 
 /**
  * gets html file and returns html string customized using context
@@ -23,8 +24,9 @@ export function compileTemplate(
       'no such file or directory ' + '(file:///' + templateFilePath + ')',
       );
   }
-  const tokens: IToken[] = tokenizeHtml(htmlContent);
-  const blockList = parseTokens(tokens, context);
+  const filePath = path.resolve(templateFilePath)
+  const tokens: IToken[] = tokenizeHtml(htmlContent,filePath);
+  const blockList = parseTokens(tokens, context, filePath);
   if(blockList[0].referenceFile === ''){
    for(let i in blockList){
     newHtml += blockList[i].data.join('')
@@ -34,8 +36,9 @@ export function compileTemplate(
     let baseBlockList: IBlock[] = []
     try {
       const baseContent = readFileSync(blockList[0].referenceFile).toString();
-      const baseTokens = tokenizeHtml(baseContent)
-      baseBlockList = parseTokens(baseTokens,context)
+      const baseFilePath = path.resolve(blockList[0].referenceFile)
+      const baseTokens = tokenizeHtml(baseContent,baseFilePath)
+      baseBlockList = parseTokens(baseTokens,context,filePath)
     } catch {
       throw new TemplateFileError(
         'no such file or directory ' + '(file:///' + blockList[0].referenceFile + ')',

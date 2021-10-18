@@ -10,7 +10,7 @@
     <h1>Hello World {{item}}</h1>
   {% endfor %}
 
-  {% if user.age < 21 %}
+  {% if user.name === 'ali' %}
     <h1>you should not see {{ user.name }}</h1>
     <h1>you should not see this</h1>
     {% if true %}

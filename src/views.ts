@@ -42,6 +42,7 @@ function render(
       // TODO: Add custom error page for debug
       console.error(e);
     }
+    console.log(e);
     responseHelper.statusCode = 404;
     console.log(responseHelper.statusCode);
     responseHelper.body = '404 Error';

@@ -1,3 +1,4 @@
+import { TemplateParsingError } from './errors.js';
 import { IToken, TokenType } from './lexer.js';
 
 interface IActiveToken {
@@ -9,10 +10,10 @@ interface IActiveToken {
   list: any;
 }
 
-export interface IBlock{
-  tag:string;
+export interface IBlock {
+  tag: string;
   referenceFile: string;
-  data: string[]
+  data: string[];
 }
 
 /**
@@ -22,17 +23,21 @@ export interface IBlock{
  * @param context An object used for referencing variables
  * @returns List of parsed strings
  */
-export function parseTokens(tokens: IToken[], context: any): IBlock[] {
+export function parseTokens(
+  tokens: IToken[],
+  context: any,
+  filePath: string,
+): IBlock[] {
   // to store the final result
   let parsedTokenList: string[] = [];
   // to store loop tags that need processing
   let activeStack: IActiveToken[] = [];
 
-  let baseFile: string = ''
-  let currentBlockTag : string = ''
-  let blockList: IBlock[] = []
+  let baseFile: string = '';
+  let currentBlockTag: string = '';
+  let blockList: IBlock[] = [];
 
-  let i = 0
+  let i = 0;
   while (i < tokens.length) {
     var token = tokens[i];
     /**
@@ -42,37 +47,39 @@ export function parseTokens(tokens: IToken[], context: any): IBlock[] {
      **/
     if (token.type === TokenType.TEXT) {
       parsedTokenList.push(token.data);
-    } 
+    } else if (token.type === TokenType.VARIABLE) {
     /**
      * VARIABLE
      * add text to result after fetching its content from context
      * it will not show if cant find inside context
      * this might happen multiple times for the same value
      **/
-    else if (token.type === TokenType.VARIABLE) {
-      const activeContext = activeStack.pop()
-      if(activeContext){
-        if(activeContext?.type === TokenType.FOR){
-          context[activeContext.listItemContextName] = activeContext.list[activeContext.internalIndex]
-          activeStack.push(activeContext)
-        }else{
-          activeStack.push(activeContext)
+      const activeContext = activeStack.pop();
+      if (activeContext) {
+        if (activeContext?.type === TokenType.FOR) {
+          context[activeContext.listItemContextName] =
+            activeContext.list[activeContext.internalIndex];
+          activeStack.push(activeContext);
+        } else {
+          activeStack.push(activeContext);
         }
       }
-      parsedTokenList.push(parseVariables(token, context));
-    }
+      parsedTokenList.push(parseVariables(token, context, filePath));
+    } else if (token.type === TokenType.FOR) {
     /**
      * FOR
      * for loops will revisit already visited tokens
      * the token itself will not be printed
      * -- index of the main loop might change here --
      **/
-    else if (token.type === TokenType.FOR) {
       // getting list name from token ⚠️optional values
-      
+
       let rawList: any = token.value['items'];
-      let listItemContextName = token.value['item']
-      if(!listItemContextName) throw new Error('No context name provided')
+      let listItemContextName = token.value['item'];
+      if (!listItemContextName)
+        throw new TemplateParsingError(
+          `Unprovided Variable: No context name provided (${filePath}:${token.line}:1)`,
+        );
       // transforming itemName to context[itemName] and user.itemName to context[user][itemName]
       rawList = transformReferencingToIndexing(rawList);
       // Getting list of data dynamically
@@ -81,13 +88,21 @@ export function parseTokens(tokens: IToken[], context: any): IBlock[] {
         'if(' + rawList + '){return ' + rawList + ';}else{return null;}',
       )(context);
 
-      // TODO: Change Error to TemplateError
-      if (!list) throw new Error(rawList + ' is null');
+      if (!list)
+        throw new TemplateParsingError(
+          `Wrong Context Format: ${rawList} is null or undefined (${filePath}:${token.line}:1)`,
+        );
       // Ignore process if length of for loop list is less or equal zero
       if (list.length <= 0) {
         // set index to after the end of for loop
-        i = endingTagIndex(tokens, i, TokenType.FOR, TokenType.ENDFOR);
-      }else{
+        i = endingTagIndex(
+          tokens,
+          i,
+          TokenType.FOR,
+          TokenType.ENDFOR,
+          filePath,
+        );
+      } else {
         // add some information to activeStack to show that current token is open
         activeStack.push({
           type: token.type,
@@ -98,132 +113,128 @@ export function parseTokens(tokens: IToken[], context: any): IBlock[] {
           internalIndex: 0,
         });
       }
-    } 
+    } else if (token.type === TokenType.ENDFOR) {
     /**
      * EndFor
      * check internal index of for-loop from it's active statement
      * in the active stack and goes back to it's original index
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
-    else if (token.type === TokenType.ENDFOR) {
+     **/
       const activeStatement = activeStack.pop();
       // console.log(activeStatement)
       if (!activeStatement) {
-        // TODO: Change Error to TemplateError
-        throw new Error('endfor tag without starting tag');
+        throw new TemplateParsingError(
+          `Syntax Error: endfor tag without starting tag (${filePath}:${token.line}:1)`,
+        );
       }
       if (activeStatement.type === TokenType.FOR) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
-          delete context[activeStatement.listItemContextName]
+          delete context[activeStatement.listItemContextName];
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
           activeStatement.internalIndex += 1;
           i = activeStatement.index;
           activeStack.push(activeStatement);
         } else if (activeStatement.internalIndex > activeStatement.cycles) {
-          // TODO: Change Error to TemplateError
-          throw new Error(
+          throw new TemplateParsingError(
             'Illegal value: internalIndex can not be grater than cycles',
           );
         }
       }
-    } 
+    } else if (token.type === TokenType.LOOP) {
     /**
      * LOOP
      * loop a set of tokens multiple times
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
-    else if (token.type === TokenType.LOOP) {
+     **/
       let loopCycles: number = parseInt(token.value['times']);
       if (loopCycles <= 0) {
-        i = endingTagIndex(tokens, i, TokenType.LOOP, TokenType.ENDLOOP);
+        i = endingTagIndex(
+          tokens,
+          i,
+          TokenType.LOOP,
+          TokenType.ENDLOOP,
+          filePath,
+        );
       } else {
         activeStack.push({
           type: token.type,
           index: i,
           list: undefined,
           cycles: loopCycles - 1,
-          listItemContextName:'',
+          listItemContextName: '',
           internalIndex: 0,
         });
       }
-    } 
+    } else if (token.type === TokenType.ENDLOOP) {
     /**
      * EndLoop
      * check internal index of loop from it's active statement
      * in the active stack and goes back to it's original index
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
-    else if (token.type === TokenType.ENDLOOP) {
+     **/
       const activeStatement = activeStack.pop();
       // console.log(activeStatement)
       if (!activeStatement) {
-        // TODO: Change Error to TemplateError
-        throw new Error('endLoop tag without starting tag');
+        throw new TemplateParsingError(
+          `Syntax Error: endloop tag without starting tag (${filePath}:${token.line}:1)`,
+        );
       }
       if (activeStatement.type === TokenType.LOOP) {
         if (activeStatement.internalIndex === activeStatement.cycles) {
-          i++
+          i++;
           continue;
         } else if (activeStatement.internalIndex < activeStatement.cycles) {
           activeStatement.internalIndex += 1;
           i = activeStatement.index;
           activeStack.push(activeStatement);
         } else if (activeStatement.internalIndex > activeStatement.cycles) {
-          // TODO: Change Error to TemplateError
-          throw new Error(
+          throw new TemplateParsingError(
             'Illegal value: internalIndex can not be grater than cycles',
           );
         }
       }
-    }
+    } else if (token.type === TokenType.IF) {
     /**
      * IF
      * shows a set of tokens based on truth of a condition
      * the token itself will not be printed
      * -- index of the main loop might change here --
-    **/
-    else if (token.type === TokenType.IF) {
-      if (!checkIfCondition(token, context)) {
-        i = endingTagIndex(tokens, i, TokenType.IF, TokenType.ENDIF);
+     **/
+      if (!checkIfCondition(token, context, filePath)) {
+        i = endingTagIndex(tokens, i, TokenType.IF, TokenType.ENDIF, filePath);
       }
-    }
-
-    else if(token.type === TokenType.EXTEND){
-      baseFile = token.value['extend']
-      baseFile = baseFile.replace(/['"]+/g, '')
-    }
-
-    else if(token.type === TokenType.BLOCK){
-      const blockTag = token.value['block']
-      if(!blockTag) throw new Error("No Block Tag");
-      currentBlockTag = blockTag
+    } else if (token.type === TokenType.EXTEND) {
+      baseFile = token.value['extend'];
+      baseFile = baseFile.replace(/['"]+/g, '');
+    } else if (token.type === TokenType.BLOCK) {
+      const blockTag = token.value['block'];
+      if (!blockTag) throw new Error('No Block Tag');
+      currentBlockTag = blockTag;
       blockList.push({
-        tag:'block-' + Math.floor(Math.random()*123456),
+        tag: 'block-' + Math.floor(Math.random() * 123456),
         referenceFile: baseFile,
-        data: parsedTokenList
-      })
-      parsedTokenList = []
-    }
-
-    else if(token.type === TokenType.ENDBLOCK){
+        data: parsedTokenList,
+      });
+      parsedTokenList = [];
+    } else if (token.type === TokenType.ENDBLOCK) {
       blockList.push({
         tag: currentBlockTag,
         referenceFile: baseFile,
-        data: parsedTokenList
-      })
-      parsedTokenList = []
+        data: parsedTokenList,
+      });
+      parsedTokenList = [];
     }
-    i++; 
+    i++;
   }
   blockList.push({
-    tag:'block-' + Math.floor(Math.random()*123456),
+    tag: 'block-' + Math.floor(Math.random() * 123456),
     referenceFile: baseFile,
-    data: parsedTokenList
-  })
-  parsedTokenList = []
+    data: parsedTokenList,
+  });
+  parsedTokenList = [];
   // Return the final result
   return blockList;
 }
@@ -235,15 +246,15 @@ export function parseTokens(tokens: IToken[], context: any): IBlock[] {
  * @param context used to reference correct values
  * @returns parse value from a reference to only a string
  */
-function parseVariables(token: IToken, context: any): string {
+function parseVariables(token: IToken, context: any, filePath: string): string {
   let variable;
   try {
     const value: string = token.value['variable'];
     const execString = transformReferencingToIndexing(value);
     variable = new Function('context', 'return ' + execString)(context);
   } catch (e) {
-    throw new Error(
-      `${token.value['variable']} was not provided in the context`,
+    throw new TemplateParsingError(
+      `Wrong Context Format: ${token.value['variable']} was not provided in the context (${filePath}:${token.line}:1)`,
     );
   }
   if (variable) return variable;
@@ -285,15 +296,19 @@ function transformReferencingToIndexing(
  * @param context Used to find reference to correct values
  * @returns condition boolean of the given token
  */
-function checkIfCondition(token: IToken, context: any): Boolean {
+function checkIfCondition(
+  token: IToken,
+  context: any,
+  filePath: string,
+): Boolean {
   const condition = token.value['condition'];
   if (condition) {
     if (condition === 'true' || condition === 'false') {
       let result = new Function('return (' + condition + ')? true : false;')();
       if (result !== undefined) return result;
       else
-        throw new Error(
-          'Error parsing ' + token + ':' + condition + ' is not a valid syntax',
+        throw new TemplateParsingError(
+          `Error parsing ${token.data}: ${condition} is not a valid syntax (${filePath}:${token.line}:1)`,
         );
     } else {
       const phrase = transformReferencingToIndexing(condition);
@@ -303,20 +318,16 @@ function checkIfCondition(token: IToken, context: any): Boolean {
       )(context);
       if (result !== undefined) return result;
       else
-        throw new Error(
-          'Error parsing ' +
-            token +
-            ':' +
-            condition +
-            ' is not available in context',
+        throw new TemplateParsingError(
+          `Error parsing ${token.data}: ${condition} can not be parsed (${filePath}:${token.line}:1)`,
         );
     }
   }
   let comp1 = token.value['comp1'];
   let comp2 = token.value['comp2'];
   const op = token.value['op'];
-  comp1 = comp1.replace(/['"]+/g, '\"')
-  comp2 = comp2.replace(/['"]+/g, '\"')
+  comp1 = comp1.replace(/['"]+/g, '"');
+  comp2 = comp2.replace(/['"]+/g, '"');
   if (comp1 && comp2 && op) {
     let conditionString: string = '';
     const indexedComp1: string = transformReferencingToIndexing(comp1);
@@ -340,14 +351,16 @@ function checkIfCondition(token: IToken, context: any): Boolean {
     } else {
       conditionString += comp2;
     }
-    try{
+    try {
       const result: boolean = new Function(
         'context',
         'return (' + conditionString + ');',
       )(context);
       if (result !== undefined) return result;
-    }catch(e){
-      throw new Error('condition can not be parsed')
+    } catch (e) {
+      throw new TemplateParsingError(
+        `Parsing Error: condition can not be parsed (${filePath}:${token.line}:1)`,
+      );
     }
   }
 
@@ -368,6 +381,7 @@ function endingTagIndex(
   currentIndex: number,
   startingToken: TokenType,
   endingToken: TokenType,
+  filePath: string,
 ): number {
   let i = currentIndex + 1;
   let activeTokenFlag: Boolean = false;
@@ -384,5 +398,7 @@ function endingTagIndex(
     }
     i += 1;
   }
-  throw new Error(tokensList[currentIndex] + ' has no ending tag');
+  throw new TemplateParsingError(
+    `Syntax Error: ${tokensList[currentIndex]} has no ending tag (${filePath})`,
+  );
 }
