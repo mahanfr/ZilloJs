@@ -31,7 +31,7 @@
 import { TemplateTokenError } from "./errors.js";
 
 const ifRegex =
-  /{%[\s]*if[\s]+(?<condition>[\w\d_\.\'\"\(\)\[\]]+)[\s]*%}|{%[\s]*if[\s]+(?<comp1>[\w\d_\.\'\"\(\)\[\]]+)[\s]*(?<op>(==|===|\<|\>|\<=|\>=))[\s]*(?<comp2>[\w\d_\.\'\"\(\)\[\]]+)[\s]*%}/;
+  /{%[\s]*if[\s]+(?<condition>[\w\d_\.\'\"\(\)\[\]]+)[\s]*%}|{%[\s]*if[\s]+(?<comp1>[\w\d_\.\'\"\(\)\[\]]+)[\s]*(?<op>(!==|!=|==|===|\<|\>|\<=|\>=))[\s]*(?<comp2>[\w\d_\.\'\"\(\)\[\]]+)[\s]*%}/;
   const forRegex =
   /{%[\s]*for[\s]+(?<item>[\w\d_\.]+)[\s]+in[\s]+(?<items>[\w\d_\.]+)[\s]*%}/;
 const loopRegex = /{%[\s]*loop[\s]+(?<times>[0-9]+)[\s]*%}/;
@@ -118,7 +118,12 @@ export function tokenizeHtml(html: string,filePath:string): IToken[] {
       if (val === '{') {
         expressionStack.push('{!');
         isBufferActive = true;
-      } else if (val == '{!') {
+      }else if (val === '{%' || val === '{%'){
+        expressionBuffer += htmlChar
+        expressionStack.push(val)
+        continue
+      } 
+      else if (val === '{!') {
         expressionStack.push('{!!');
         isBufferActive = false;
       }
