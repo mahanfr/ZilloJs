@@ -51,4 +51,13 @@ function render(
   return responseHelper;
 }
 
-export { render };
+function response(request:any,json:Object,code?:number) {
+  let responseHelper: IResponseHelper = {
+    statusCode: 200,
+    contentType: 'application/json',
+    body: JSON.stringify(json),
+  };
+  return responseHelper;
+}
+
+export { render , response};

@@ -1,4 +1,4 @@
-import { render } from '../lib/views.js'
+import { render,response } from '../lib/views.js'
 
 const indexContext = {
     "title":"zillojs",
@@ -11,8 +11,11 @@ const indexContext = {
 
 
 function indexView(request){
-    return render(request, 'usage/template/index.html',indexContext)
-    // return response(request, json, code)
+    // return render(request, 'usage/template/index.html',indexContext)
+    const json = {
+        text:"hello World"
+    }
+    return response(request, json, 200)
 }
 
 export default indexView
