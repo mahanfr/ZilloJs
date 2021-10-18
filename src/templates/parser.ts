@@ -1,4 +1,3 @@
-// TODO: Fix the problem with parsing strings that use single quote ('')
 import { IToken, TokenType } from './lexer.js';
 
 interface IActiveToken {
@@ -202,7 +201,7 @@ export function parseTokens(tokens: IToken[], context: any): IBlock[] {
       if(!blockTag) throw new Error("No Block Tag");
       currentBlockTag = blockTag
       blockList.push({
-        tag:'block-' + Math.floor(Math.random()*1000),
+        tag:'block-' + Math.floor(Math.random()*123456),
         referenceFile: baseFile,
         data: parsedTokenList
       })
@@ -220,7 +219,7 @@ export function parseTokens(tokens: IToken[], context: any): IBlock[] {
     i++; 
   }
   blockList.push({
-    tag:'block-' + Math.floor(Math.random()*1000),
+    tag:'block-' + Math.floor(Math.random()*123456),
     referenceFile: baseFile,
     data: parsedTokenList
   })
@@ -313,9 +312,11 @@ function checkIfCondition(token: IToken, context: any): Boolean {
         );
     }
   }
-  const comp1 = token.value['comp1'];
-  const comp2 = token.value['comp2'];
+  let comp1 = token.value['comp1'];
+  let comp2 = token.value['comp2'];
   const op = token.value['op'];
+  comp1 = comp1.replace(/['"]+/g, '\"')
+  comp2 = comp2.replace(/['"]+/g, '\"')
   if (comp1 && comp2 && op) {
     let conditionString: string = '';
     const indexedComp1: string = transformReferencingToIndexing(comp1);
@@ -339,15 +340,14 @@ function checkIfCondition(token: IToken, context: any): Boolean {
     } else {
       conditionString += comp2;
     }
-    const result: boolean = new Function(
-      'context',
-      'return (' + conditionString + ');',
-    )(context);
-    if (result !== undefined) return result;
-    else {
-      throw new Error(
-        conditionString + ' ' + result + ' condition can not be parsed',
-      );
+    try{
+      const result: boolean = new Function(
+        'context',
+        'return (' + conditionString + ');',
+      )(context);
+      if (result !== undefined) return result;
+    }catch(e){
+      throw new Error('condition can not be parsed')
     }
   }
 
