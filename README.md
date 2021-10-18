@@ -6,7 +6,7 @@
 
 <br/>
 <div align="center">
-    <img src="./documentation/Logo.svg" />
+    <img src="https://raw.githubusercontent.com/mahanfarzaneh2000/ZilloJs/master/documentation/Logo.svg" />
     <br/>
     <h3>Web Framework</h3>
     <a href="https://github.com/mahanfarzaneh2000/ZilloJs/blob/master/documentation">Documentation</a>
