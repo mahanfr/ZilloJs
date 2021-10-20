@@ -1,3 +1,5 @@
+#! /usr/bin/env node
+
 import fs from 'fs'
 
 var args = process.argv.slice(2)
