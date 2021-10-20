@@ -11,11 +11,11 @@ const indexContext = {
 
 
 function indexView(request){
-    // return render(request, 'usage/template/index.html',indexContext)
-    const json = {
-        text:"hello World"
-    }
-    return response(request, json, 200)
+    return render(request, 'usage/template/index.html',indexContext)
+    // const json = {
+    //     text:"hello World"
+    // }
+    // return response(request, json, 200)
 }
 
 export default indexView

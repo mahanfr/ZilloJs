@@ -1,6 +1,6 @@
 import {Application} from "../lib/Application.js"
-import { routes } from "./routes.js"
+import { urlPatterns } from "./routes.js";
 
 const app = new Application();
-app.setRoutes(routes);
+app.setRoutes(urlPatterns);
 app.start(8000);

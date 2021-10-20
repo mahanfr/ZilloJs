@@ -1,11 +1,12 @@
 import http from 'http';
-import { Routes, Method } from './routing.js';
+import { IRoute,checkForRoute } from './routing.js';
+
 
 class Application {
   app: Application;
   port: number;
   server: any;
-  routes: any;
+  routes: IRoute[] = [];
 
   constructor() {
     this.app = this;
@@ -35,9 +36,9 @@ class Application {
     this.server = http.createServer(async (request: any, response: any) => {
       request.body = await this.readRequestBody(request);
 
-      // TODO: check for url with prams
-      if (request.url in this.routes.routes) {
-        const responseHelper = this.routes.routes[request.url].view(request);
+      const route = checkForRoute(request.url,this.routes)
+      if (route !== null) {
+        const responseHelper = route.view(request);
         response.writeHead(responseHelper.statusCode, {
           'Content-Type': responseHelper.contentType,
         });
