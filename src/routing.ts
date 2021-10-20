@@ -1,6 +1,6 @@
 
 export interface IRoute {
-  urlPattern: string;
+  urlPattern: RegExp;
   view: Function;
   name?: string;
   helper?: string;
@@ -13,7 +13,7 @@ export function path(
   helper?: string,
 ): IRoute {
   return ({
-    urlPattern: parseToRegex(urlPattern),
+    urlPattern: parseHumanReadableExceptedPatternToRegex(urlPattern),
     view: view,
     name: name,
     helper: helper,
@@ -24,14 +24,14 @@ export function path(
 export function checkForRoute(url:string,list:IRoute[]) : IRoute|null{
   for(let i in list){
     const route = list[i] 
-    if(route.urlPattern === url){
+    if(isRouteMatchesUrl(route.urlPattern,url)){
       return route
     }
   }
   return null
 }
 
-function parseQuery(url: string) {
+export function parseQuery(url: string) {
   const results = url.match(/\?(?<query>.*)/);
   if (!results) {
     return {};
@@ -52,17 +52,16 @@ function parseQuery(url: string) {
   return params;
 }
 
-function parseToRegex(url: string): string {
+function parseHumanReadableExceptedPatternToRegex(exceptedPattern: string): RegExp {
   let str: string = '';
-
-  for (var i = 0; i < url.length; i++) {
-    const c = url.charAt(i);
+  for (var i = 0; i < exceptedPattern.length; i++) {
+    const c = exceptedPattern.charAt(i);
     if (c === '$') {
       // eat all characters
       let param: string = '';
-      for (var j = i + 1; j < url.length; j++) {
-        if (/\w/.test(url.charAt(j))) {
-          param += url.charAt(j);
+      for (var j = i + 1; j < exceptedPattern.length; j++) {
+        if (/\w/.test(exceptedPattern.charAt(j))) {
+          param += exceptedPattern.charAt(j);
         } else {
           break;
         }
@@ -73,20 +72,20 @@ function parseToRegex(url: string): string {
       str += c;
     }
   }
-  return str;
+  return new RegExp(str);
 }
 
-function getPramRouteValues(
+export function getPramRouteValues(
   url: string,
-  route: string,
+  route: RegExp,
 ): { [key: string]: string } | undefined {
-  const regex = parseToRegex(route);
+  const regex = route;
   const match = url.match(new RegExp(regex));
   return match?.groups;
 }
 
-function isRouteMatchesUrl(url: string, route: string): boolean {
+function isRouteMatchesUrl(route: RegExp, url: string): boolean {
   url = url.split('?')[0];
-  const regex = new RegExp(parseToRegex(route));
-  return regex.test(url);
+  var match = url.match(route)
+  return match && url === match[0]? true : false;
 }

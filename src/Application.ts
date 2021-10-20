@@ -1,5 +1,16 @@
 import http from 'http';
-import { IRoute,checkForRoute } from './routing.js';
+import qs from 'querystring'
+import { URLSearchParams } from 'url';
+import { IRoute,checkForRoute, getPramRouteValues, parseQuery } from './routing.js';
+
+interface IRequest{
+  method:string,
+  url:string,
+  urlParameters: any,
+  body:any,
+  queries?:any,
+  user:any,
+}
 
 
 class Application {
@@ -20,7 +31,8 @@ class Application {
         body += '' + chunk;
       });
       request.on('end', () => {
-        resolve(body);
+        resolve(body)
+        //return parseQuery('?'+body);
       });
       request.on('error', (err: any) => {
         reject(err);
@@ -34,19 +46,33 @@ class Application {
 
   public start(port: number, host = '127.0.0.1') {
     this.server = http.createServer(async (request: any, response: any) => {
-      request.body = await this.readRequestBody(request);
-
-      const route = checkForRoute(request.url,this.routes)
-      if (route !== null) {
-        const responseHelper = route.view(request);
-        response.writeHead(responseHelper.statusCode, {
-          'Content-Type': responseHelper.contentType,
-        });
-        response.write(responseHelper.body);
-        response.end();
-      } else {
-        response.writeHead(404, { 'Content-Type': 'text/plane' });
-        response.write('404 not found');
+      try{
+        request.body = await this.readRequestBody(request);
+        const route = checkForRoute(request.url,this.routes)
+        if (route !== null) {
+          const customRequest:IRequest = {
+            method: request.method,
+            url: request.url,
+            urlParameters: getPramRouteValues(request.url,route.urlPattern),
+            body: request.body,
+            queries: parseQuery(request.url),
+            user: undefined,
+          }
+          const responseHelper = route.view(customRequest);
+          if(!responseHelper) throw new Error("");
+          response.writeHead(responseHelper.statusCode, {
+            'Content-Type': responseHelper.contentType,
+          });
+          response.write(responseHelper.body);
+          response.end();
+        } else {
+          response.writeHead(404, { 'Content-Type': 'text/plane' });
+          response.write('404 not found');
+          response.end();
+        }
+      }catch{
+        response.writeHead(402, { 'Content-Type': 'text/plane' });
+        response.write('Bad request');
         response.end();
       }
       console.log(

@@ -11,6 +11,7 @@ const indexContext = {
 
 
 function indexView(request){
+    console.log(request.body)
     return render(request, 'usage/template/index.html',indexContext)
     // const json = {
     //     text:"hello World"
