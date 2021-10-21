@@ -47,18 +47,28 @@ Re-inventing the wheel basically! but it's started because i loved django framew
 <br/>
 
 # Getting Started
-Ready to use zillojs? you can! This project is NOT PRODUCTION READY but you can still play around with it
+This project currently is in **beta** state and it is **NOT STABLE FOR PRODUCTION** but you can still use in development and for small html projects that want to make advantage of it's template engine
+
 ## Requirements
-- Node > v14.18.0
-- npm > 8.0.0
+This project is using **ES6** javaScript imports so you need **node js** 14 or higher to run this project without any errors
+- **Node js** > v14.18.0
+- **npm** > 8.0.0 
+
 ## Installation
-run this command in your terminal
-```bash
-npm install -g @mahanfr/zillojs
+As of beta version you need to set up your ```package.json``` in a way that makes you use ```.js``` file imports in your project. create a folder inside your directory and initialize npm:
+``` bash
+mkdir myProject
+cd ./myProject
+npm init -y
 ```
-to start a new project run this command
-```bash
-zillojs init
+after running this commands npm adds a ```package.json``` file inside your project directory. add this line a the bottom of the file before closing cully bracket
+``` json
+"type":"module"
+```
+For downloading and installing zillo.js you have to use npm by writing the command bellow inside your favorite command line:
+
+``` bash
+npm i zillojs
 ```
 <br/>
 
