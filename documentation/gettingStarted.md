@@ -27,4 +27,4 @@ now you can use zillojs library!
 </br>
 
 ***
-[Next - creating the application](./index.md)
+[Next - creating the application](./application.md)
