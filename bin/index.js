@@ -1,122 +1,113 @@
-#! /usr/bin/env node
+#!/usr/bin/env node
 
 import fs from 'fs'
+import chalk from 'chalk'
+import { createSpinner } from 'nanospinner'
+import yargs from 'yargs';
+import { exec } from 'child_process';
+import { getPackageJson, getReadme, getTsconfig, getGitInit } from './boilerplate/initFiles.js';
 
-var args = process.argv.slice(2)
+const greeting = chalk.blue.bold("ZilloJs version 0.1.0");
+console.log(greeting);
 
-// levenshtein Distance to find misspells while entering commands 
-const levenshteinDistance = (str1 = '', str2 = '') => {
-  const track = Array(str2.length + 1).fill(null).map(() =>
-  Array(str1.length + 1).fill(null));
-  for (var i = 0; i <= str1.length; i += 1) {
-     track[0][i] = i;
+const createFolderStructure = async (name, location, ts = false) => {
+  const folderStructure = {
+    "src": ["core", "models", "views", "templates"],
+    "test": ["models", "views"],
+    "types": [],
+    "public": [],
   }
-  for (var j = 0; j <= str2.length; j += 1) {
-     track[j][0] = j;
-  }
-  for (var j = 1; j <= str2.length; j += 1) {
-     for (var i = 1; i <= str1.length; i += 1) {
-        const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
-        track[j][i] = Math.min(
-           track[j][i - 1] + 1, // deletion
-           track[j - 1][i] + 1, // insertion
-           track[j - 1][i - 1] + indicator, // substitution
-        );
-     }
-  }
-  return track[str2.length][str1.length];
-};
-
-// Visible code for help command
-const helpMessage =
-`\x1b[33m 
-usage: Zillojs command [options] required_input required_input2 \x1b[0m
-\x1b[34m commands: \x1b[0m 
-      help, h                       Show help for all commands and options
-      init [Project name]           Create project and add necessary files
-\x1b[34m options: \x1b[0m 
-      -v, --version                 Show the current version of the framework
-      -h, --help                    Show help for a command
-`
-
-class ProjectGenerator{
-
-  setName(name){
-    const regex = new RegExp('^[a-zA-Z][a-zA-Z_0-9]*$')
-    if(!regex.test(args[0])){
-      console.error('Project names must include [a-zA-z0-9_]')
-      process.exit(1)
+  // create folders based on folder structure
+  for (const folder in folderStructure) {
+    const path = location + '/' + folder + '/';
+    if (folder === 'types' && !ts) {
+      continue;
     }
-    this.name = name
+    fs.mkdirSync(path, { recursive: true });
+    folderStructure[folder].forEach(file => {
+      fs.mkdirSync(path + '/' + file);
+    })
   }
+}
 
-  setDir(dir='.'){
-    this.dir = dir
+const generateInitFiles = async (name, location, ts = false) => {
+  const packageJson = getPackageJson(name, ts);
+  fs.writeFileSync(location + '/package.json', JSON.stringify(packageJson, null, 2));
+  if (ts) {
+    const tsconfig = getTsconfig(name);
+    fs.writeFileSync(location + '/tsconfig.json', JSON.stringify(tsconfig, null, 2));
   }
+  fs.writeFileSync(location + '/README.md', getReadme(name));
+  fs.writeFileSync(location + '/.gitignore', getGitInit());
+}
 
-  createFolder(dir){
-    if(dir === '.'){
-      console.warn('\x1b[33m','⚠  No Directory Created!')
-      return
-    }
-    try {
-      if (!fs.existsSync(dir+'/'+this.name)){
-        fs.mkdirSync(dir+'/'+this.name, { recursive: true });
+const handelInitCommand = async (args) => {
+  if (args.name === undefined) {
+    console.error(chalk.red.bold("Project name is required"));
+    process.exit(1);
+  }
+  if (args.location === '.') {
+    console.warn(chalk.yellow.bold("Project location is current directory"));
+  }
+  const typescript = args.typeScript
+  // Create folder structure
+  const spinner = createSpinner('creating a project at ' + args.location + ' ' + '\n').start()
+  createFolderStructure(args.name, args.location, typescript).then(() => {
+    spinner.success({ text: chalk.green.bold("Project folders created successfully") })
+  }).catch(err => {
+    spinner.error({ text: chalk.red.bold(err) })
+    process.exit(1);
+  }).finally(() => {
+    // Create package.json
+    const spinner2 = createSpinner('creating package.json ' + '\n').start()
+    generateInitFiles(args.name, args.location, typescript).then(() => {
+      spinner2.success({ text: chalk.green.bold("package.json created successfully") })
+      if (typescript) {
+        spinner2.success({ text: chalk.green.bold("tsconfig.json created successfully") })
       }
-      console.info('\x1b[32m','✔  Project Directory Created!')
-    } catch (error) {
-      console.error('\x1b[31m',error)
-      process.exit(1)
-    }
-  }
-
-  generate(){
-    this.createFolder(this.dir)
-  }
-
+    }).catch(err => {
+      spinner2.error({ text: chalk.red.bold(err) })
+      process.exit(1);
+    }).finally(() => {
+      // TODO: add npm install command
+      // TODO: set up boilerplate codes
+      // TODO: add git init command
+    })
+  })
 }
 
-// List of all subcommands and their functions
-var subcommands = {
-  'help': () => {
-    console.info(helpMessage)
-  },
-  'init': (args) => {
-    if(args.length < 1 ||args[0].startsWith('-') || args[0].startsWith('-')){
-      // Do Option
-    }else{
-      const projectGenerator = new ProjectGenerator();
-      projectGenerator.setName(args[0])
-      try {
-        projectGenerator.setDir(args[1])
-      } catch (error) {
-        projectGenerator.setDir()
-      }
-      projectGenerator.generate();
-    }
-  },
-}
+const options = yargs(process.argv.slice(2))
+  .command({
+    command: 'init <name> <location> [options]',
+    describe: 'initialize the project',
+    builder: (yargs) => {
+      return yargs.positional('name', {
+        describe: 'project name',
+        type: 'string',
+      })
+        .positional('location', {
+          describe: 'project location',
+          type: 'string',
+          default: '.',
+        })
+        .option('t', {
+          alias: 'type-script',
+          describe: 'use typescript',
+          type: 'boolean',
+          default: false,
+        })
+        .option("e", {
+          alias: "no-name",
+          describe: "create a project with no name",
+          type: "boolean"
+        })
+    },
+    handler: handelInitCommand,
+  })
+  .usage('Usage: zillojs <command> [options]')
+  .option("h", { alias: "help", describe: "show help", type: "boolean" })
+  .parse();
 
-// Check for sub commands. set it to help if non exist
-var subcommand = ''
-try {
-  subcommand = args[0]
-} catch (error) {
-  subcommand = 'help'
+if (options.help) {
+  console.log(options);
 }
-
-// Search for each command if exists execute
-// if close show the right command and exit with error if no match
-const keys = Object.keys(subcommands)
-for(var i = 0; i < keys.length; i++){
-  const distance = levenshteinDistance(subcommand ,keys[i])
-  if(distance === 0){
-    subcommands[subcommand](args.slice(1))
-    process.exit(0)
-  }else if(distance < 3){
-    console.error('Command has no reference to execute. Do you mean ' + keys[i] + ' ?')
-    process.exit(127)
-  }
-}
-console.error('Command not found')
-process.exit(127)

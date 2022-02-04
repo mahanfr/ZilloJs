@@ -1,4 +1,4 @@
-import { render,response } from '../lib/views.js'
+import { render, response } from '../lib/views.js'
 
 const indexContext = {
     "title":"zillojs",
