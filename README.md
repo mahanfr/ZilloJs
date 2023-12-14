@@ -1,19 +1,19 @@
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
-![GitHub language count](https://img.shields.io/github/languages/count/mahanfarzaneh2000/ZilloJs?style=flat-square)
-![GitHub followers](https://img.shields.io/github/followers/mahanfarzaneh2000?style=flat-square)
-![GitHub](https://img.shields.io/github/license/mahanfarzaneh2000/ZilloJs)
+![GitHub language count](https://img.shields.io/github/languages/count/mahanfr/ZilloJs?style=flat-square)
+![GitHub followers](https://img.shields.io/github/followers/mahanfr?style=flat-square)
+![GitHub](https://img.shields.io/github/license/mahanfr/ZilloJs)
 
 <br/>
 <div align="center">
-    <img src="https://raw.githubusercontent.com/mahanfarzaneh2000/ZilloJs/master/documentation/Logo.svg" />
+    <img src="https://raw.githubusercontent.com/mahanfr/ZilloJs/master/documentation/Logo.svg" />
     <br/>
     <h3>Web Framework</h3>
-    <a href="https://github.com/mahanfarzaneh2000/ZilloJs/blob/master/documentation">Documentation</a>
+    <a href="https://github.com/mahanfr/ZilloJs/blob/master/documentation">Documentation</a>
     ·
-    <a href="https://github.com/mahanfarzaneh2000/ZilloJs/issues">Report Bug</a>
+    <a href="https://github.com/mahanfr/ZilloJs/issues">Report Bug</a>
     ·
-    <a href="https://github.com/mahanfarzaneh2000/ZilloJs/discussions">Open Discussion</a>
+    <a href="https://github.com/mahanfr/ZilloJs/discussions">Open Discussion</a>
 </div>
 <br/>
 
@@ -88,7 +88,7 @@ We have big plans for this project. But reality is what we care about.The roadMa
 <br/>
 
 # License
-Every line of code written is under <a href="https://github.com/mahanfarzaneh2000/ZilloJs/blob/master/LICENSE">MIT Licence</a>
+Every line of code written is under <a href="https://github.com/mahanfr/ZilloJs/blob/master/LICENSE">MIT Licence</a>
 
 <br/>
 
@@ -105,9 +105,9 @@ Every line of code written is under <a href="https://github.com/mahanfarzaneh200
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/mahanfarzaneh2000/ZilloJs.svg?style=flat-square
-[contributors-url]: https://github.com/mahanfarzaneh2000/ZilloJs/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/mahanfarzaneh2000/ZilloJS.svg?style=flat-square
-[forks-url]: https://github.com/mahanfarzaneh2000/ZilloJs/network/members
+[contributors-shield]: https://img.shields.io/github/contributors/mahanfr/ZilloJs.svg?style=flat-square
+[contributors-url]: https://github.com/mahanfr/ZilloJs/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/mahanfr/ZilloJS.svg?style=flat-square
+[forks-url]: https://github.com/mahanfr/ZilloJs/network/members
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/mahan-farzaneh/
